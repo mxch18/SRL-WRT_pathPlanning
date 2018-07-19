@@ -51,7 +51,7 @@ function sysCall_init() -- this part will be executed one time just at the begin
 		r,seg = sim.checkDistance(movDum,heightfield,0)
 		
 		dum_tab[i] = sim.createDummy(size)
-        sim.setObjectInt32Parameter(dum_tab[k],sim.objintparam_visibility_layer,256)
+        sim.setObjectInt32Parameter(dum_tab[i],sim.objintparam_visibility_layer,256)
 		sim.setObjectPosition(dum_tab[i],-1,{seg[4],seg[5],seg[6]})
 		sim.setObjectParent(dum_tab[i],heightfield,true)
 
