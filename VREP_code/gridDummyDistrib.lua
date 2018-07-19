@@ -22,13 +22,19 @@ function sysCall_init() -- this part will be executed one time just at the begin
 	sim.setObjectPosition(pro_sensor,-1,{0,0,-dec})
 
 	-- terrain discretization
-	-- we assume that the shape has been correctly setup. This means that:
+	-- we set the shape position. This means that:
 	--	- the lowest point of the heightfield is at z=0 in world frame
 	--	- center of the shape is at x=0 and y=0 in world frame
 
 	heightfield = sim.getObjectAssociatedWithScript(sim_handle_self) -- gets terrain shape handle
-	
+
+	r,terrain_Z_max = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_max_z)
+	r,terrain_Z_min = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_min_z)
+	terrain_Z = terrain_Z_max - terrain_Z_min
+	sim.setObjectPosition(heightfield,-1,{0,0,terrain_Z/2})
+
 	-- gets terrain bounds
+
 	r,terrain_X_max = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_max_x)
 	r,terrain_X_min = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_min_x)
 	terrain_X = terrain_X_max - terrain_X_min
