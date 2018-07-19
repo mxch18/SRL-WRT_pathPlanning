@@ -33,8 +33,8 @@ function sysCall_init() -- this part will be executed one time just at the begin
 	r,terrain_X_min = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_min_x)
 	terrain_X = terrain_X_max - terrain_X_min
 
-	r,terrain_Y_max = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_max_x)
-	r,terrain_Y_min = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_min_x)
+	r,terrain_Y_max = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_max_y)
+	r,terrain_Y_min = sim.getObjectFloatParameter(heightfield,sim.objfloatparam_objbbox_min_y)
 	terrain_Y = terrain_Y_max-terrain_Y_min
 
 	Kx = 40 -- number of grid points in x direction
@@ -72,6 +72,7 @@ function sysCall_init() -- this part will be executed one time just at the begin
 				dum_tab[k] = sim.createDummy(size)
                 sim.setObjectInt32Parameter(dum_tab[k],sim.objintparam_visibility_layer,256)
 				sim.setObjectPosition(dum_tab[k],-1,{X,Y,distance})
+				sim.setObjectParent(dum_tab[k],heightfield,true)
 				k = k+1
 			end
 
