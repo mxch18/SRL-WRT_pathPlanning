@@ -4,6 +4,8 @@ function sysCall_init() -- this part will be executed one time just at the begin
 
     	-- init random seed
 	math.randomseed(os.time())
+	-- txt file for later work
+	filen = "/home/maxens/Stage/Code/Scilab/points.txt"
 	-- dummy size
 	size = 0.05
 	-- adds an invisible dummy
@@ -39,7 +41,8 @@ function sysCall_init() -- this part will be executed one time just at the begin
 	Z = 0
 
 	dum_tab = {} -- array of dummy handles
-
+	
+	file = io.open(filen,"w")
 	for i = 1,N,1
 	do
 	-- move the dummy around and extract heights
@@ -50,11 +53,15 @@ function sysCall_init() -- this part will be executed one time just at the begin
 		sim.setObjectPosition(movDum,-1,{X,Y,Z})
 		r,seg = sim.checkDistance(movDum,heightfield,0)
 		
+		file:write(seg[4]," ",seg[5]," ",seg[6],"\n")
+		
 		dum_tab[i] = sim.createDummy(size)
         sim.setObjectInt32Parameter(dum_tab[i],sim.objintparam_visibility_layer,256)
 		sim.setObjectPosition(dum_tab[i],-1,{seg[4],seg[5],seg[6]})
 		sim.setObjectParent(dum_tab[i],heightfield,true)
 
 	end
+
+	file:close()
 
 end
