@@ -3,7 +3,7 @@
 function sysCall_init() -- this part will be executed one time just at the beginning of a simulation
 
     	-- init random seed
-	math.randomseed(1234) -- not actually random for the moment
+	math.randomseed(os.time())
 	-- dummy size
 	size = 0.05
 	-- adds an invisible dummy
