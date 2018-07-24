@@ -18,7 +18,7 @@ function [mAdj,ci,ri,diri] = adjacentModes(curMod,lifted_leg,hs_rad,p)
     //Compute direction of half-sphere
     diri = lifted_leg-ci;
     diri = diri/norm(diri);
-    ci = ci+ri*diri;
+    ci = ci+5*ri*diri;
     
     //Check for adjacency
     for i = 1:size(curMod,1)
