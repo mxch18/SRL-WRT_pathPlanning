@@ -1,4 +1,4 @@
-function [mAdj,ci,ri,diri] = adjacentModes(curMod,lifted_leg,hs_rad,p)
+function [mAdj,ci,ri,diri] = adjacentModes(curMod,lifted_leg,hs_rad,push,p)
     // Find modes adjacent to initial stance
     // For the moment, only geometric considerations are taken into account 
     
@@ -6,6 +6,7 @@ function [mAdj,ci,ri,diri] = adjacentModes(curMod,lifted_leg,hs_rad,p)
         // curMod : the current stance/mode
         // lifted_leg : the free leg's tip position before lifting
         // hs_rad : the half-sphere radius
+        // push : the amount of displacement of the half-sphere center wrt support triangle incenter
         // p : the footholds
     //OUTPUT
         // mAdj : the adjacent modes according to certain criteria
@@ -18,7 +19,7 @@ function [mAdj,ci,ri,diri] = adjacentModes(curMod,lifted_leg,hs_rad,p)
     //Compute direction of half-sphere
     diri = lifted_leg-ci;
     diri = diri/norm(diri);
-    ci = ci+5*ri*diri;
+    ci = ci+push*ri*diri;
     
     //Check for adjacency
     for i = 1:size(curMod,1)
