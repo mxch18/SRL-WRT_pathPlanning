@@ -25,9 +25,10 @@ pIni = [-0.25,-5,-4.5;-0.25,-4.2,-4.5;0.25,-5,-4.5;0.25,-4.2,-4.5]
 // Find modes adjacent to initial stance with left front leg lifted
 
 FL = [-0.25,-4.2,-4.5];
+HR = [0.25,-5,-4.5];
 
-[pAdj,ctLift,rtLift,dirHS] = adjacentModes(pIni,FL,rHS,p);
-ctLift=FL;
+[pAdj,ctLift,rtLift,dirHS] = adjacentModes(pIni,FL,rHS,15,p);
+//ctLift=FL;
 p_tmp = p;
 
 if length(pAdj) then
@@ -49,24 +50,34 @@ tet3 = linspace(-%pi,%pi,10);
 
 [TET1,TET2,TET3]=ndgrid(tet1,tet2,tet3);
 
-X = l3.*cos(TET1).*cos(TET2+TET3)+l2.*cos(TET1).*cos(TET2)+l1.*cos(TET1)+ctLift(2);
-Y = l3.*sin(TET1).*cos(TET2+TET3)+l2.*sin(TET1).*cos(TET2)+l1.*sin(TET1)+ctLift(1);
-Z = l3.*sin(TET2+TET3)+l2.*sin(TET2)+ctLift(3);
+hip = FL+0.33*(HR-FL)/norm(HR-FL);
+hip(3)=hip(3)+0.15;
+
+X = l3.*cos(TET1).*cos(TET2+TET3)+l2.*cos(TET1).*cos(TET2)+l1.*cos(TET1)+hip(1);
+Y = l3.*sin(TET1).*cos(TET2+TET3)+l2.*sin(TET1).*cos(TET2)+l1.*sin(TET1)+hip(2);
+Z = l3.*sin(TET2+TET3)+l2.*sin(TET2)+hip(3);
 
 // Plot everything
-plotPts(p_tmp,2,4,10,10);
-plotPts(pIni,11,8,5,5);
-if length(pAdj) then
-    plotPts(pAdj,0,6,13,13);
-end
+//plotPts(p_tmp,2,4,10,10);
+//plotPts(pIni,11,8,5,5);
+scatter3(p_tmp(:,1),p_tmp(:,2),p_tmp(:,3),4,'*')
 
-
-for i=1:length(tet1)
-    plot3d3(Y(:,:,i),X(:,:,i),Z(:,:,i))
+if size(pAdj,1)>1 then
+//    plotPts(pAdj,0,6,13,13);
+    scatter3(pAdj(:,1),pAdj(:,2),pAdj(:,3),4,[0,1,0],'*')
 end
 
 a = gca();
-a.zoom_box=[-1,-6,1,-3,-6,-3.5]
+for i=1:length(tet1)
+    plot3d3(X(:,:,i),Y(:,:,i),Z(:,:,i))
+//    a.children(i).children.mark_mode = "on";
+//    a.children(i).children.surface_mode = "off";
+//    a.children(i).children.mark_size_unit = "point";
+//    a.children(i).children.mark_style = 2;
+//    a.children(i).children.mark_size = 1;
+end
+
+//a.zoom_box=[-1,-6,1,-3,-6,-3.5]
 
 // Draw half-sphere
 draw=1; //0 if not drawing
