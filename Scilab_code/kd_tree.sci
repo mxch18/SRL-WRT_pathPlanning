@@ -1,35 +1,46 @@
-function root = kd_tree(points,depth)
+function node_num = kd_tree(points,depth,parent_number)
+    global cellIn;
+    global lcell;
+    
     //Computes a kd_tree from the dataset
     //INPUT:
     //points : the dataset
-    //depth : the current node depth. Root is at depth 0.
+    //depth : the current node depth. Root is at depth 0
+    //cellIn : a cell array. Global variable. Initially empty (cellIn = cell())
+    //lcell : the cell array current size
+    //parent_number : the node's parent position/number in the cell array
     
     //OUTPUT:
-    //root: the tree's root
-    //the root variable contains all information on the rest of the tree.
+    //node_num : the node's position/number in the cell array
     
-    //node = struct('leftChild',null,'rightChild',null,'point',null)
-        //leftChild is a tree or nothing if leaf
-        //rightChild is a tree or nothing if leaf
+    //node = struct('parent',0,'leftChild',0,'rightChild',0,'axis',0,'isLeaf',%T,'point',null)
+        //parent is the number/position of the parent in the cell array. 0 for root.
+        //leftChild is the number/position of the left child in the cell array. -1 if no child.
+        //rightChild is the number/position of the right child in the cell array. -1 if no child.
+        //axis is the normal to the splitting hyperplane at the node's depth
+        //isLeaf indicates if the node is a leaf or not
         //point is the actual k-d point representation
     
     //axis = 1+modulo(depth,k-1)
     
     //initialize root
-    root = struct('leftChild',null,'rightChild',null,'axis',null,'isLeaf',%T,'point',null);
+    root = struct('parent',0,'leftChild',-1,'rightChild',-1,'axis',0,'isLeaf',%T,'point',null);
+    
+    root.parent = parent_number;
+    lcell = lcell+1;
     
     lp = size(points,1);
     if lp<2 then //leaf node
         root.point = points;
+        node_num = lcell;
+        cellIn(node_num).entries = root;
         return;
     end
-    
     root.isLeaf = %F;
-//    disp("hehe balek")
-    nd = ceil(sqrt(lp));
-//    nd =1;
-    dim = size(points,2);
     
+//    nd = ceil(sqrt(lp));
+    nd =1;
+    dim = size(points,2);
     
     //axis for this split
     axis = 1+modulo(depth,dim-1);
@@ -37,6 +48,9 @@ function root = kd_tree(points,depth)
     //find median along this direction
     medi = randMedian(points,ceil(lp/nd),axis);
     root.point = medi;
+    
+    node_num = lcell;
+    cellIn(node_num).entries = root;
     
     //remove median from dataset
     points = removeRowFromMat(points,medi);
@@ -46,12 +60,12 @@ function root = kd_tree(points,depth)
     
     //recurse if points
     if size(points1,1) then
-//        disp("right"+string(depth));
-        root.rightChild = kd_tree(points1,depth+1);
+        disp("right"+string(depth));
+        cellIn(node_num).entries.rightChild = kd_tree(points1,depth+1,node_num);
     end
     if size(points2,1) then
-//        disp("left"+string(depth));
-       root.leftChild = kd_tree(points2,depth+1);
+        disp("left"+string(depth));
+       cellIn(node_num).entries.leftChild = kd_tree(points2,depth+1,node_num);
     end
     
 endfunction
