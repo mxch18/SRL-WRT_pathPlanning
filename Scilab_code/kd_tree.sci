@@ -16,13 +16,15 @@ function root = kd_tree(points,depth)
     //axis = 1+modulo(depth,k-1)
     
     //initialize root
-    root = struct('leftChild',null,'rightChild',null,'point',null);
+    root = struct('leftChild',null,'rightChild',null,'axis',null,'isLeaf',%T,'point',null);
     
     lp = size(points,1);
     if lp<2 then //leaf node
         root.point = points;
         return;
     end
+    
+    root.isLeaf = %F;
 //    disp("hehe balek")
     nd = ceil(sqrt(lp));
 //    nd =1;
@@ -31,6 +33,7 @@ function root = kd_tree(points,depth)
     
     //axis for this split
     axis = 1+modulo(depth,dim-1);
+    root.axis = axis;
     //find median along this direction
     medi = randMedian(points,ceil(lp/nd),axis);
     root.point = medi;
