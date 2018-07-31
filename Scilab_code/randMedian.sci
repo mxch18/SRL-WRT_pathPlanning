@@ -8,7 +8,7 @@ function med = randMedian(points,nbRanPts,axis)
     //OUTPUT:
     //med : the median point wrt to the axis
     
-    tmp = zeros(1,3);
+//    tmp = zeros(1,3);
     // select nbRanPts to compute median
     for i = 1:nbRanPts
         lp = size(points,1);
