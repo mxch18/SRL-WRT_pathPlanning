@@ -15,6 +15,7 @@ function node_num = kd_tree(points,depth,parent_number)
     
     //node = struct('parent',0,'leftChild',0,'rightChild',0,'axis',0,'isLeaf',%T,'point',null)
         //parent is the number/position of the parent in the cell array. 0 for root.
+        //number is the number/position of the node in the cell array.
         //leftChild is the number/position of the left child in the cell array. -1 if no child.
         //rightChild is the number/position of the right child in the cell array. -1 if no child.
         //axis is the normal to the splitting hyperplane at the node's depth
@@ -24,7 +25,7 @@ function node_num = kd_tree(points,depth,parent_number)
     //axis = 1+modulo(depth,k-1)
     
     //initialize root
-    root = struct('parent',0,'leftChild',-1,'rightChild',-1,'axis',0,'isLeaf',%T,'point',null);
+    root = struct('parent',0,'number',0,'leftChild',-1,'rightChild',-1,'axis',0,'isLeaf',%T,'point',null);
     
     root.parent = parent_number;
     lcell = lcell+1;
@@ -33,6 +34,7 @@ function node_num = kd_tree(points,depth,parent_number)
     if lp<2 then //leaf node
         root.point = points;
         node_num = lcell;
+        root.number = node_num;
         cellIn(node_num).entries = root;
         return;
     end
@@ -50,6 +52,7 @@ function node_num = kd_tree(points,depth,parent_number)
     root.point = medi;
     
     node_num = lcell;
+    root.number = node_num;
     cellIn(node_num).entries = root;
     
     //remove median from dataset
@@ -60,11 +63,11 @@ function node_num = kd_tree(points,depth,parent_number)
     
     //recurse if points
     if size(points1,1) then
-        disp("right"+string(depth));
+//        disp("right"+string(depth));
         cellIn(node_num).entries.rightChild = kd_tree(points1,depth+1,node_num);
     end
     if size(points2,1) then
-        disp("left"+string(depth));
+//        disp("left"+string(depth));
        cellIn(node_num).entries.leftChild = kd_tree(points2,depth+1,node_num);
     end
     
