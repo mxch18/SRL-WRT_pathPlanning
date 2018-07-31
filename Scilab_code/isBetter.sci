@@ -2,9 +2,15 @@ function [bool,disOut,index] = isBetter(disIn,queryPoint,newPoint)
     
     
     bool = %F;
-    ld = size(disOut,1);
-    disQN = normNoSqrt(queryPoint,newPoint);
+    index = -1;
     disOut = disIn;
+    
+    disQN = normNoSqrt(queryPoint,newPoint);
+    
+    if ~disQN then
+        return;
+    end
+
     dmax = max(disIn);
     if disQN<dmax then
         bool = %T;
