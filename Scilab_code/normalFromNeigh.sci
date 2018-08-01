@@ -1,4 +1,4 @@
-function nvect = normalFromNeigh(X)
+function [nvect,d] = normalFromNeigh(X)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -10,6 +10,7 @@ function nvect = normalFromNeigh(X)
     
     //OUTPUT:
     //nvect: the normal
+    //d: the distance from the plane to the origin
     
 //----------------------------------------------------------------------------//
     
@@ -30,5 +31,6 @@ function nvect = normalFromNeigh(X)
     [evals,vp] = spec(Mcov);
     
     nvect = evals(:,1);
+    d = nvect'*G';
     
 endfunction
