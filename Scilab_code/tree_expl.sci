@@ -1,5 +1,24 @@
 function [stackOut,neighborsOut,distanceOut] = tree_expl(kdtree,root,point,neighborsIn,stackIn,distanceIn)
-    //go down the tree to a leaf node
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku University
+    
+    //Description:
+    //Explore the tree with binary search
+    
+    //INPUT:
+    //kdtree: the kdtree structure
+    //root: the point at which we start the exploration
+    //point: the point whom we look neighbors for
+    //neighborsIn: the current nearest neighbors
+    //stackIn: a list of the nodes visited so far
+    //distanceIn: the current distance to the nearest neighbors
+    
+    //OUPUT:
+    //stackOut: the stack after exploring the tree
+    //neighborsOut: the updated nearest neighbors
+    //distanceOut: the updated distances to nearest neighbors
+    
+//----------------------------------------------------------------------------//
     
 //    disp(root)
     stackIn = stackInsert(stackIn,root);

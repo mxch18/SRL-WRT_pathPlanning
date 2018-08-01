@@ -1,8 +1,13 @@
 function node_num = kd_tree(points,depth,parent_number)
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku University
+    
     global cellIn;
     global lcell;
     
+    //Description:
     //Computes a kd_tree from the dataset
+    
     //INPUT:
     //points : the dataset
     //depth : the current node depth. Root is at depth 0
@@ -13,6 +18,7 @@ function node_num = kd_tree(points,depth,parent_number)
     //OUTPUT:
     //node_num : the node's position/number in the cell array
     
+    //INFO:
     //node = struct('parent',0,'leftChild',0,'rightChild',0,'axis',0,'isLeaf',%T,'point',null)
         //parent is the number/position of the parent in the cell array. 0 for root.
         //number is the number/position of the node in the cell array.
@@ -21,8 +27,9 @@ function node_num = kd_tree(points,depth,parent_number)
         //axis is the normal to the splitting hyperplane at the node's depth
         //isLeaf indicates if the node is a leaf or not
         //point is the actual k-d point representation
+        
+//----------------------------------------------------------------------------//
     
-    //axis = 1+modulo(depth,k-1)
     
     //initialize root
     root = struct('parent',0,'number',0,'leftChild',-1,'rightChild',-1,'axis',0,'isLeaf',%T,'point',null);

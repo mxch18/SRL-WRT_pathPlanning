@@ -1,5 +1,10 @@
 function neighbors = kNN(kdtree,k,point)
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku Univeristy
+    
+    //Description:
     //Outputs the k-nearest neighbors of an input point. Uses a k-d tree structure as input.
+    ///2018/08/01 : Doesn't output the actual nearest neighbors, nut more of an approximation
     
     //INPUT:
     //kdtree : the k-d tree structure. It is a cell array.
@@ -8,6 +13,11 @@ function neighbors = kNN(kdtree,k,point)
     
     //OUTPUT:
     //neighbors: a (k x 3) matrix containing the coordinates of the k nearest neighbors
+    
+    //TODO: Debug; Probably due to not unwraping new explorations of the tree when recursing up the tree.
+    //             Should probably change the way we check for intersection.
+    
+//----------------------------------------------------------------------------//
     
     // distance field
     distance = zeros(k,1);

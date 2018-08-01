@@ -1,4 +1,23 @@
 function [stackOut,distanceOut,neighborsOut] = tree_rev_expl(kdtree,stackIn,point,distanceIn,neighborsIn)
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku University
+    
+    //Description:
+    //Unwind the tree exploration to check for possible better points on opposite sides of splitting hyperplanes.
+    
+    //INPUT:
+    //kdtree: the kdtree structure
+    //stackIn: a list of the nodes visited so far
+    //point: the point whom we look neighbors for
+    //distanceIn: the current distance to the nearest neighbors
+    //neighborsIn: the current nearest neighbors
+    
+    //OUTPUT:
+    //stackOut: the stack after exploring the tree
+    //distanceOut: the updated distances to nearest neighbors
+    //neighborsOut: the updated nearest neighbors
+    
+//----------------------------------------------------------------------------//
     
     stackOut = stackIn;
     neighborsOut = neighborsIn;
@@ -20,7 +39,6 @@ function [stackOut,distanceOut,neighborsOut] = tree_rev_expl(kdtree,stackIn,poin
     str = str+"]";
     
     stackTmp = list();
-    disp(type(stackTmp))
     
     disp("Popped the node n°"+string(curNode.number)+", representing point :"+str);
     
@@ -41,7 +59,7 @@ function [stackOut,distanceOut,neighborsOut] = tree_rev_expl(kdtree,stackIn,poin
                 //this means that the unexplored subtree is on the left
                 disp("Exploring uncharted left tree!");
 //                disp(kdtree(parNode.leftChild).entries)
-//[stackOut,neighborsOut,distanceOut] = tree_expl(kdtree,root,point,neighborsIn,stackIn,distanceIn)
+//                [stackOut,neighborsOut,distanceOut] = tree_expl(kdtree,root,point,neighborsIn,stackIn,distanceIn)
                 [stackTmp,neighborsIn,distanceIn] = tree_expl(kdtree,kdtree(parNode.leftChild).entries,point,neighborsIn,stackTmp,distanceIn);
             elseif (parNode.rightChild ~= -1)&(parNode.rightChild ~= curNode.number) then
                 //this means that the unexplored subtree is on the right
