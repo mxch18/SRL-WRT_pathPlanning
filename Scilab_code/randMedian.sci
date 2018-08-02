@@ -1,5 +1,10 @@
 function med = randMedian(points,nbRanPts,axis)
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku University
+    
+    //Description:
     //Computes the median of uniformly randomly selected points from a dataset
+    
     //INPUT:
     //points : the dataset
     //nbRanPts : the number of points we will select for the computation of the median
@@ -7,6 +12,8 @@ function med = randMedian(points,nbRanPts,axis)
     
     //OUTPUT:
     //med : the median point wrt to the axis
+    
+//----------------------------------------------------------------------------/
     
 //    tmp = zeros(1,3);
     // select nbRanPts to compute median

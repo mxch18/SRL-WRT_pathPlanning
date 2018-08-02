@@ -1,8 +1,15 @@
 function n = normNoSqrt(p1,p2)
+    //Author : Maxens ACHIEPI
+    //Space Robotics Laboratory - Tohoku University
+    
+    //Description:
     //Computes the squared norm of the vector defined by p2-p1.
+    
     //INPUT
     
     //OUTPUT
+    
+//----------------------------------------------------------------------------/
     
     lp = length(p1);
     n = 0;
