@@ -3,19 +3,28 @@ clear
 clc
 close();
 rand("seed",25);
-p = rand(100,2)*10;
-getd(".")
+p = rand(1000,2)*10;
+getd(".");
+getd("./kNN");
 global cellIn;
 global lcell;
 cellIn=cell();
 lcell=0;
+
+tic();
 kd_tree(p,0,0);
-pt = 1;
-nNeigh = 1;
+disp('kdtree created in ' + string(toc()) + ' seconds');
 
+pt = 25;
+nNeigh = 5;
+
+tic();
 n1 = kNN(cellIn,nNeigh,p(pt,:));
+disp('Time for kNN search in kdtree:'+ string(toc()));
 
+tic();
 n2 = bruteForceNeighbors(p,p(pt,:),nNeigh);
+disp('Time for kNN search with naive search:'+ string(toc()));
 
 if size(p,2)==2 then
     scatter(p(:,1),p(:,2));

@@ -47,8 +47,8 @@ function node_num = kd_tree(points,depth,parent_number)
     end
     root.isLeaf = %F;
     
-//    nd = ceil(sqrt(lp));
-    nd =1;
+    nd = ceil(sqrt(lp));
+//    nd =1;
     dim = size(points,2);
     
     //axis for this split
