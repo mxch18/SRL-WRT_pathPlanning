@@ -12,11 +12,12 @@ function [xproj,dist] = projectionDroite(x,orig,n)
     
     //OUTPUT
     //xproj: the projected point. Row vector.
-    //dist: the distance to the origin.
+    //dist: the distance squared to the origin.
     
 //----------------------------------------------------------------------------//
     
     n = n/norm(n);
     xproj = ((xproj-orig)*n')*n + orig;
+    dist = normNoSqrt(xproj,orig);
     
 endfunction

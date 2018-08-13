@@ -1,4 +1,4 @@
-function [P,O,THET] = RLG(STANCE,NORMALS,PARAMS)
+function [P,O,THET,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -12,21 +12,31 @@ function [P,O,THET] = RLG(STANCE,NORMALS,PARAMS)
     //              *PARAMS.intRad;
     //              *PARAMS.halfAngle;
     //              *PARAMS.shellPtsNb;
+    //              *PARAMS.kpxy;
+    //              *PARAMS.kpz;
+    //              *PARAMS.kpRx;
+    //              *PARAMS.kpRy;
+    //              *PARAMS.tInc;
     
     //OUTPUT
     //
     
 //----------------------------------------------------------------------------//
-    
+    P = 0;O = 0;THET = 0;SUCCESS = %F;
     
     //Compute LS-fit plane by ACP
     [footPlane_z,footPlane_d,footPlane_or] = plane_ACP(STANCE);
-    //Project x0 on the plane, to define the plane base
-    if norm(cross(footPlane_z,[1 0 0]))<1.e-3 then
+    footPlane_z = footPlane_z/norm(footPlane_z)
+    
+    //Project x0 on the plane, to define the plane frame
+    if norm(cross(footPlane_z,[1 0 0]))<1.e-3 then //if x is perpendicular to plane
         footPlane_x = projectionPlan([0 1 0],footPlane_or,footPlane_z);
     else
         footPlane_x = projectionPlan([1 0 0],footPlane_or,footPlane_z);
     end
+    footPlane_x = footPlane_x - footPlane_or;
+    footPlane_x = footPlane_x/norm(footPlane_x);
+    
     footPlane_y = cross(footPlane_z,footPlane_x);
     
     footPlane_Rmat = [footPlane_x;footPlane_y;footPlane_z];
@@ -62,6 +72,22 @@ function [P,O,THET] = RLG(STANCE,NORMALS,PARAMS)
     end
     
     //Compute Cxy
+    Cxy = computeCxy(WS_proj_RP,[1 0;0 1]);
+    if isnan(Cxy.origin) then
+        disp('Could not compute intersection of workspaces!');
+        return;
+    end
     
+    //Sample pxy_RP, transform into pxy_R0
+    kpxy = 0;
+    while kpxy<PARAMS.kpxy
+        kpxy = kpxy+1;
+        pxy_RP = sampleInBBox(Cxy);
+        pxy_R0 = footPlane_Rmat'*[pxy_RP 0]'+footPlane_or';
+        mprintf("XY - At iteration %d of %d:\nBase xy position: [%.2f, %.2f]",kpxy,PARAMS.kpxy,pxy_R0(1),pxy_R0(2));
+        
+        //Compute intersection of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
+        
+    end
     
 endfunction
