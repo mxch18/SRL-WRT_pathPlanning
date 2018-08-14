@@ -7,7 +7,7 @@ function [xproj,dist] = projectionDroite(x,orig,n)
     
     //INPUT
     //x : the point to be projected. Row vector.
-    //orig : the line's "origin"
+    //orig : the line's "origin". Row vector;
     //n : the line's direction. Row vector.
     
     //OUTPUT
@@ -17,7 +17,7 @@ function [xproj,dist] = projectionDroite(x,orig,n)
 //----------------------------------------------------------------------------//
     
     n = n/norm(n);
-    xproj = ((xproj-orig)*n')*n + orig;
+    xproj = ((x-orig)*n')*n + orig;
     dist = normNoSqrt(xproj,orig);
     
 endfunction

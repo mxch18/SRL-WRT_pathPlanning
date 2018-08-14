@@ -1,4 +1,4 @@
-function point = sampleInBBox(bbox)
+function point = sampleInBBox(bbox,shrink)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -12,7 +12,7 @@ function point = sampleInBBox(bbox)
     //point: the point in the bounding box
     
 //----------------------------------------------------------------------------//
-    
-    point = bbox.origin+bbox.length*bbox.v1+bbox.width*bbox.v2;
+    newOri = bbox.origin+(1-shrink)/2*(bbox.length*bbox.v1+bbox.width*bbox.v2);
+    point = newOri+shrink*(rand()*bbox.length*bbox.v1+rand()*bbox.width*bbox.v2);
     
 endfunction

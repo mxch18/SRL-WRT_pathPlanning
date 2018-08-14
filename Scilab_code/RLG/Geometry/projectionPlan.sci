@@ -16,7 +16,7 @@ function xproj = projectionPlan(x,orig,n)
 //----------------------------------------------------------------------------//
     
     n = n/norm(n);
-    d = norm(n*orig');
+    d = n*orig';
     xproj = x - (x*n')*n;
     xproj = xproj + d*n;
     

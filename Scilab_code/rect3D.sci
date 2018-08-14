@@ -32,8 +32,12 @@ function [x,y,z] = rect3D(orig,n,xd,yd,l,w)
         l=50;
         w=50;
         
-        v1 = [-n(2),n(1),0];
-    
+        if ~n(2)&~n(1) then 
+            v1 = [1 0 0];
+        else
+            v1 = [-n(2),n(1),0];
+        end
+        
         v2 = cross(n,v1);
         
         v1 = v1/norm(v1);

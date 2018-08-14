@@ -1,9 +1,14 @@
 clear;close();clc;getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
 
+stance = [-0.25,-5,-4.5;-0.25,-4.2,-4.5;0.25,-5,-4.5;0.25,-4.2,-4.5];
+
+[a,b,c] = plane_ACP(stance);
+
 orig = floor(rand(1,3)*10);
+orig=c;
 //orig = [1,1,1];
-n = floor(rand(1,3)*10);
-//n = [1,1,1];
+//n = floor(rand(1,3)*10);
+n = a;
 [x,y,z] = rect3D(orig,n);
 
 //xtoproj = floor(rand(1,3)*10);
@@ -15,15 +20,15 @@ xproj = projectionPlan(xtoproj,orig,n);
 //scatter3(xtoproj(1)*ones(1,2),xtoproj(2)*ones(1,2),xtoproj(3)*ones(1,2),50,'red');
 //scatter3(xproj(1)*ones(1,2),xproj(2)*ones(1,2),xproj(3)*ones(1,2),50,'green');
 
-alp=linspace(-%pi/2,%pi/2,10);
-tet=linspace(0,%pi,10);
-rHS = 5;
-dirHS = rand(1,3);
+alp=linspace(-%pi/2,%pi/2,20);
+tet=linspace(0,%pi,20);
+rHS = 0.55+0.17;
+dirHS = [0 0 1];
 ctLift = floor(rand(1,3)*50);
-[xHS,yHS,zHS]=halfSph(ctLift,rHS,alp,tet,dirHS);
-[xHS1,yHS1,zHS1]=halfSph(ctLift+[1 1 0]*2,rHS,alp,tet,dirHS+rand(1,3));
-[xHS2,yHS2,zHS2]=halfSph(ctLift+[0 -1 -1]*2,rHS,alp,tet,dirHS+rand(1,3));
-[xHS3,yHS3,zHS3]=halfSph(ctLift+[-1 0 1]*2,rHS,alp,tet,dirHS+rand(1,3));
+[xHS,yHS,zHS]=halfSph([-0.25,-5,-4.5],rHS,alp,tet,dirHS);
+[xHS1,yHS1,zHS1]=halfSph([-0.25,-4.2,-4.5],rHS,alp,tet,dirHS)//+rand(1,3));
+[xHS2,yHS2,zHS2]=halfSph([0.25,-5,-4.5],rHS,alp,tet,dirHS)//+rand(1,3));
+[xHS3,yHS3,zHS3]=halfSph([0.25,-4.2,-4.5],rHS,alp,tet,dirHS)//+rand(1,3));
 
 for i = 1:length(xHS)
     v = projectionPlan([xHS(i),yHS(i),zHS(i)],orig,n);

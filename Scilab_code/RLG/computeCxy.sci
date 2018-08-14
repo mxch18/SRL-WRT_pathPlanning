@@ -1,4 +1,4 @@
-function Cxy = computeCxy(WSmiProj,axis)
+function Cxy = computeCxy(WSmiProj,axis,shrink)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -16,6 +16,13 @@ function Cxy = computeCxy(WSmiProj,axis)
     //Cxy: the intersection of the projected approximated workspaces. It is a 
     //bbox structure. All its elements are in the plane's frame (2D)
     
+    //TODO: Iteration on the computation of intersection so that we can limit
+    //      further the error on the intersection. Keep the current pattern,
+    //      but make the computation of intersection between two sets iterative
+    //      As of now, maybe put a shrinking factor on bbox size?
+    //      A large part of the error in intersection comes from the axis-
+    //      oriented nature of the bounding boxes.
+    
 //----------------------------------------------------------------------------//
     
     dim = size(WSmiProj);
@@ -31,7 +38,6 @@ function Cxy = computeCxy(WSmiProj,axis)
     for i =1:dim(3)
         [rO,rL,rW] = rectBbox2DAxisAligned(WSmiProj(:,:,i));
         WSmiProjBBox(i) = struct('origin',rO,'v1',axis(1,:),'v2',axis(2,:),'length',rL,'width',rW);
-//        disp(WSmiProjBBox(i))
     end
     
     //Compute intersection
@@ -61,5 +67,11 @@ function Cxy = computeCxy(WSmiProj,axis)
     end
     
     Cxy = curBBox;
+    
+    //shrinking factor to account for error in intersection.
+    //doesn't work because origin is bottom left corner -> we can put that in sampling
+//    Cxy.length = shrink*Cxy.length;
+//    Cxy.width = shrink*Cxy.width;
+    
     
 endfunction

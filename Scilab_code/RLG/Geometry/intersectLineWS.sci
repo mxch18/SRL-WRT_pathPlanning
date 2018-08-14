@@ -36,7 +36,7 @@ function [bool,zInterval] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
         if dist(i)>distMax then distMax = dist(i); end
     end
     
-    t=-distMax; //Because what if the plan normal and the footholds normal are in opposite direction?
+    t=-abs(distMax); //Because what if the plan normal and the footholds normal are in opposite direction?
                 //plane_ACP only gives normal in an undetermined way wrt to direction!!!
     pt = zeros(1,3);
     zValid = []
@@ -47,7 +47,7 @@ function [bool,zInterval] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     //oldState and newState will only give desirable results if the workspace is a CONVEX SET.
     //if the set is not convex, there is no other choice than to explore all of the line
     
-    while t<distMax & (newState|(~oldState&~NewState))
+    while t<abs(distMax) & (newState|(~oldState&~newState))
         pt(1) = lineDesc.origin(1)+t*lineDesc.direction(1);
         pt(2) = lineDesc.origin(2)+t*lineDesc.direction(2);
         pt(3) = lineDesc.origin(3)+t*lineDesc.direction(3);
