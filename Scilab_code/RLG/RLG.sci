@@ -47,17 +47,18 @@ function [P,O,THET,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         //leg workspace, all points in R0
         WSmi_R0 = [];
         WSmi_proj_RP = [];
+        //shell descriptions
+        shellDesc_i = struct('origin',STANCE(i,:),'extRad',PARAMS.extRad(i),'intRad',PARAMS.intRad(i),'axis',NORMALS(i,:),'halfAngle',PARAMS.halfAngle);
+        shellDesc(i) = shellDesc_i;
         
-        WSmi_origin = STANCE(i,:);
-        WSmi_extRadius = PARAMS.extRad(i);
-        WSmi_intRadius = PARAMS.intRad(i);
         WSmi_alpha = linspace(0,2*%pi,PARAMS.shellPtsNb);
-        WSmi_theta = linspace(0,PARAMS.halfAngle,PARAMS.shellPtsNb);
-        WSmi_direction = NORMALS(i,:);
-        [x1,y1,z1] = halfSph(WSmi_origin,WSmi_extRadius,WSmi_alpha,WSmi_theta,WSmi_direction);
+        WSmi_theta = linspace(0,shellDesc_i.halfAngle,PARAMS.shellPtsNb);
+        
+        [x1,y1,z1] = halfSph(shellDesc_i.origin,shellDesc_i.extRad,WSmi_alpha,WSmi_theta,shellDesc_i.axis);
         WSmi_R0 = [x1',y1',z1'];
+        
         if WSmi_intRadius then
-            [x2,y2,z2] = halfSph(WSmi_origin,WSmi_intRadius,WSmi_alpha,WSmi_theta,WSmi_direction);
+            [x2,y2,z2] = halfSph(shellDesc_i.origin,shellDesc_i.intRad,WSmi_alpha,WSmi_theta,shellDesc_i.axis);
             WSmi_R0 = [WSmi_R0;x2' y2' z2'];
         end
         WS_R0(:,:,i) = WSmi_R0;
@@ -82,11 +83,15 @@ function [P,O,THET,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     kpxy = 0;
     while kpxy<PARAMS.kpxy
         kpxy = kpxy+1;
+        kpz = 0;
         pxy_RP = sampleInBBox(Cxy);
         pxy_R0 = footPlane_Rmat'*[pxy_RP 0]'+footPlane_or';
         mprintf("XY - At iteration %d of %d:\nBase xy position: [%.2f, %.2f]",kpxy,PARAMS.kpxy,pxy_R0(1),pxy_R0(2));
         
-        //Compute intersection of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
+        //Compute intersections of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
+        line_z = struct('origin',pxy_R0,'direction',footPlane_z);
+        for i=1:length(shellDesc)
+            [bool,zInterval_i]=intersectLineWS
         
     end
     
