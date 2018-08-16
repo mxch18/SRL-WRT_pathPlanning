@@ -44,7 +44,7 @@ function Cxy = computeCxy(WSmiProj,axis,shrink)
     [curBool1,curInt1] = bBoxInter(WSmiProjBBox(1),WSmiProj(:,:,2));
     [curBool2,curInt2] = bBoxInter(WSmiProjBBox(2),WSmiProj(:,:,1));
     if ~curBool1|~curBool2 then
-        disp('computeCxy: Leg 1 and 2 workspaces do not intersect!');
+        mprintf("computeCxy: Leg 1 and 2 workspaces do not intersect!\n");
         return;
     end
     
@@ -57,7 +57,7 @@ function Cxy = computeCxy(WSmiProj,axis,shrink)
         [curBool2,curInt2] = bBoxInter(WSmiProjBBox(i),curInt);
         
         if ~curBool1|~curBool2 then
-            disp('computeCxy: Leg '+ string(i) +' and previous leg workspaces intersection do not intersect!');
+            mprintf("computeCxy: Leg %d and previous leg workspaces intersection do not intersect!\n",i);
             return;
         end
         
