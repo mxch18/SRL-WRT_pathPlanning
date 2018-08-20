@@ -1,4 +1,4 @@
-function [bool,zInterval] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
+function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -21,8 +21,11 @@ function [bool,zInterval] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     //OUTPUT
     //
     
+    //TODO: change function to handle multiple intervals in output
+    
 //----------------------------------------------------------------------------//
     bool = %F;
+    multiple = %F;
     zInterval = [];
     
     //Project all points from WSmi_R0 onto the line. Collect distances
@@ -37,35 +40,54 @@ function [bool,zInterval] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     end
     
     t=-abs(distMax); //Because what if the plan normal and the footholds normal are in opposite direction?
-                //plane_ACP only gives normal in an undetermined way wrt to direction!!!
+                     //plane_ACP gives normal in an undetermined way wrt to direction!!!
+                     
     pt = zeros(1,3);
-    zValid = []
+    pt(1) = lineDesc.origin(1)+t*lineDesc.direction(1);
+    pt(2) = lineDesc.origin(2)+t*lineDesc.direction(2);
+    pt(3) = lineDesc.origin(3)+t*lineDesc.direction(3);
+    zMax = abs(pt(3));
+    
     k=1;
-    oldState = %F;
-    newState = %F;
     
-    //oldState and newState will only give desirable results if the workspace is a CONVEX SET.
-    //if the set is not convex, there is no other choice than to explore all of the line
+    if isInShell(shellDesc,pt) then
+        bool = %T;
+        boolLast = %T;
+        boolNow = %T;
+        zInterval(k) = pt(3);
+        k = k+1;
+    else
+        boolLast = %F;
+        boolNow = %F;
+    end
     
-    while t<abs(distMax) & (newState|(~oldState&~newState))
+    
+    while t<abs(distMax)
+        t = t+tInc;
         pt(1) = lineDesc.origin(1)+t*lineDesc.direction(1);
         pt(2) = lineDesc.origin(2)+t*lineDesc.direction(2);
         pt(3) = lineDesc.origin(3)+t*lineDesc.direction(3);
+        
         if isInShell(shellDesc,pt) then
-            oldState = newState;
-            newState = %T;
-            zValid(k) = pt(3);
-            k = k+1;
+            bool = %T;
+            boolLast = boolNow;
+            boolNow = %T;
+            if (~boolLast&boolNow)|(boolLast&~boolNow) then
+                zInterval(k) = pt(3);
+                k = k+1;
+            end
         else
-            oldState = newState;
-            newState = %F;
+            boolLast = boolNow;
+            boolNow = %F;
+            if (~boolLast&boolNow)|(boolLast&~boolNow) then
+                zInterval(k) = pt(3)-tInc;
+                k = k+1;
+            end
         end
-        t = t+tInc;
     end
     
-    if ~isempty(zValid) then
-        bool = %T;
-        zInterval=[min(zValid(1),zValid($)),max(zValid(1),zValid($))];
+    if length(zInterval)>2 then
+        multiple = %T;
     end
     
 endfunction

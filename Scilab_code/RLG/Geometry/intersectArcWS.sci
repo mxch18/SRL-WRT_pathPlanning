@@ -29,7 +29,7 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
     multiple = %F;
     angleRange = [];
     
-    //Compute rotation matrix
+    //Pre-compute part of rotation matrix
     arcDesc.normal = arcDesc.normal/norm(arcDesc.normal);
     ux = arcDesc.normal(1);
     uy = arcDesc.normal(2);
@@ -40,8 +40,8 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
     
     angle_rot = -%pi;
     
-    angleValid = [];
-    angleNotValid = [];
+//    angleValid = [];
+//    angleNotValid = [];
     k=1;
     n=1;
     
