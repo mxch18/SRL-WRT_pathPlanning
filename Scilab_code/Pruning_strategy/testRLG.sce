@@ -21,10 +21,10 @@ foot_n = [foot_n;foot_n;foot_n;foot_n];
 extRad = 0.55*ones(1,4);
 intRad = 0*ones(1,4);
 
-params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',1,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',1,'aInc',2*%pi/30);
+params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',1,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30);
 
 tic();
-[d,e,f,h,i,j]=RLG(stance,foot_n,params);
+[d,e,f,h,i,j,h]=RLG(stance,foot_n,params);
 disp(toc());
 
 oo = f'*[d.origin, 0]'+c';
