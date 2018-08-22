@@ -1,4 +1,4 @@
-function [nvect,d, or] = plane_ACP(X)
+function [nvect,d, ori] = plane_ACP(X)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -11,12 +11,12 @@ function [nvect,d, or] = plane_ACP(X)
     //OUTPUT
     //nvect: the plane normal. Row vector.
     //d: the plane distance to origin
-    //or: the plane's frame origin.
+    //ori: the plane's frame origin.
     
 //----------------------------------------------------------------------------//
     nvect = zeros(1,3);
     d = 0;
-    or = zeros(1,3);
+    ori = zeros(1,3);
     
     [n,l] = size(X);
     
@@ -27,7 +27,7 @@ function [nvect,d, or] = plane_ACP(X)
     
     G = [mean(X(:,1)),mean(X(:,2)),mean(X(:,3))];
     
-    or = G;
+    ori = G;
     
     Xp = X - ones(n,1)*G;
     
