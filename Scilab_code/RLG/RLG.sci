@@ -1,4 +1,4 @@
-function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG(STANCE,NORMALS,PARAMS)
+function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,psiInter] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -20,8 +20,8 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
     //              *PARAMS.shrink
     //              *PARAMS.kpxy;
     //              *PARAMS.kpz;
+    //              *PARAMS.kRz;
     //              *PARAMS.kRx;
-    //              *PARAMS.kRy;
     //              *PARAMS.tInc;
     //              *PARAMS.aInc;
     //              *PARAMS.baseDimensions: (1) on x, (2) on y;
@@ -30,6 +30,7 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
     //
     
     //TODO : put angle range finding in function
+    //       add closed-from IK
     
 //----------------------------------------------------------------------------//
     P = 0;O = 0;THET = 0;SUCCESS = %F;
@@ -100,7 +101,7 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
     tic()
     Cxy = computeCxy(WS_proj_RP,[1 0;0 1]);
     if isnan(Cxy.origin) then
-        mprintf('Could not compute intersection of workspaces! Stance is probably unfit\n');
+        mprintf('Could not compute intersection of workspaces! Stance is probably unreachable...\n');
         return;
     end
     disp(toc())
@@ -114,16 +115,21 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
 //        mprintf("XY - At iteration %d of %d:\nBase xy_RP position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_RP(1),pxy_RP(2));
         mprintf("XY - At iteration %d of %d:\nBase xy_R0 position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_R0(1),pxy_R0(2));
         
+        zInterval = cell(1,size(WS_R0,3));
         //Compute intersections of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
         line_z = struct('origin',pxy_R0','direction',footPlane_z);
         for i=1:size(WS_R0,3)
-            [boolInterZ_i,zInterval_i]=intersectLineWS(WS_R0(:,:,i),shellDesc(i),line_z,PARAMS.tInc);
+            [boolInterZ_i,zMultiple_i,zInterval_i,zMax_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc(i),line_z,PARAMS.tInc);
 //            boolInterZ(i) = boolInterZ_i;
-            zInterval(i,:) = zInterval_i;
             if boolInterZ_i then
-                mprintf("   Z - For leg %d, z range is: %.4f to %.4f\n",i,zInterval(i,1),zInterval(i,2));
+                zInterval(i).entries = createZInterval(zInterval_i,zMax_i,d_i);
+                if zMultiple_i then
+                    mprintf("   Z - For leg %d, z lies in %d different intervals", i, size(psiInter(i).entries,1));
+                else
+                    mprintf("   Z - For leg %d, z range is: %.4f to %.4f\n",i,zInterval(i).entries(1),zInterval(i).entries(2));
+                end
             else
-                mprintf("   Z - No intersection with leg %d workspace! Resampling pxy_RP\n",i);
+                mprintf("   Z - No intersection with leg %d workspace! Resampling pxy_RP...\n",i);
                 break;
             end
         end
@@ -131,12 +137,17 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
         if ~boolInterZ_i then continue; end
         
         //Sample pz_R0
-        zFinalInterval = min(zInterval,'r');
+        [zFinalBool,zFinalInterval] = intersectSetIntervals(zInterval);
+        if ~zFinalBool then
+            mprintf("   Z - z valid intervals do not intersect! Resammpling pxy_RP...\n")
+            continue; 
+        end
+        
         while kpz<PARAMS.kpz
             kpz = kpz+1;
-            kRx = 0;
-            pz_R0 = zFinalInterval(1)+rand()*(zFinalInterval(2)-zFinalInterval(1));
-            mprintf('Z - At iteration %d of %d:\n    Base z_R0 position: %.4f\n",kpz,PARAMS.kpz,pz_R0);
+            kRz = 0;
+            pz_R0 = sampleFromMultInterval(zFinalInterval);
+            mprintf('Z - At iteration %d of %d:\n   Base z_R0 position: %.4f\n",kpz,PARAMS.kpz,pz_R0);
             
             //Compute intersections of Api arcs and WSmi for each rotation parameters
             //Rotations are represented by Euler angles (norm ZXZ): (psi,Z0);(thet,X1);(phi,Z2)
@@ -144,9 +155,9 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
             offset_i = [];
             xOff = [1 0 0]*PARAMS.baseDimensions(1);
             yOff = [0 1 0]*PARAMS.baseDimensions(2);
-            T_EF_0 = eye(3,3); //Transformation matrix between end eff frame and R0. At first is identity.
-            psiInter=cell(size(WS_R0,3));
-            arcDesc_psi = struct('origin',base_R0,'normal',[0 0 1])
+            T_EF_0 = eye(3,3); //Transformation matrix between end-eff frame and R0. At first is identity.
+            psiInter=cell(1,size(WS_R0,3));
+            arcDesc_psi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z0
             //First start with (psi,Z0)
             for i=1:size(WS_R0,3)
                 select STANCE(i).leg
@@ -159,25 +170,137 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zInterval,footPlane_x,footPlane_y] = RLG
                     case 'HL' then
                         offset_i = - xOff - yOff;
                     else
-                        mprintf("Error in the definition of foothold %d : leg name does not exist!",i);
+                        mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
+                        return;
                 end
                 [boolInterPsi_i,psiMultiple_i,psiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_psi,PARAMS.aInc);
                 if boolInterPsi_i then
-                    psiInter(i).entries = createInterval(psiInter_i);
+                    psiInter(i).entries = createAngleInterval(psiInter_i);
                     if psiMultiple_i then
-                        mprintf("   PSI - For leg %d, psi lies in %d different intervals", size(psiInter(i).entries,1));
+                        mprintf("   PSI - For leg %d, psi lies in %d different intervals\n", i, size(psiInter(i).entries,1));
                     else
                         mprintf("   PSI - For leg %d, psi range is: %.4f to %.4f\n",i,psiInter(i).entries(1),psiInter(i).entries(2));
                     end
                 else
-                    mprintf("   PSI - No intersection with leg %d workspace! Resampling pz_0\n",i);
+                    mprintf("   PSI - No intersection with leg %d workspace! Resampling pz_0...\n",i);
                     break;
                 end
             end
             if ~boolInterPsi_i then continue; end
             
+            //Sample (psi,Z0)
+            [psiBoolFinal,psiFinalInterval] = intersectSetIntervals(psiInter);
+            if ~psiBoolFinal then
+                mprintf("   PSI - psi valid intervals do not intersect! Resampling z_R0...\n");
+                continue;
+            end
+            
+            while kRz<PARAMS.kRz
+                kRz = kRz +1;
+                kRx = 0;
+                psi = sampleFromMultInterval(psiFinalInterval);
+                mprintf("PSI - At iteration %d of %d:\n   Base psi: %.4f\n",kRz,PARAMS.kRz,psi);
+                //Rotate base
+                Rz0 = [cos(psi), -sin(psi), 0;sin(psi), cos(psi) 0;0 0 1];
+                T_EF_0 = T_EF_0*Rz0;
+                thetInter=cell(1,size(WS_R0,3));
+                arcDesc_thet = struct('origin',base_R0,'normal',[1 0 0]) //rotation around X1
+                //Then (thet,X1)
+                for i=1:size(WS_R0,3)
+                    select STANCE(i).leg
+                        case 'FR' then
+                            offset_i = xOff + yOff;
+                        case 'FL' then
+                            offset_i = - xOff + yOff;
+                        case 'HR' then
+                            offset_i= + xOff - yOff;
+                        case 'HL' then
+                            offset_i = - xOff - yOff;
+                        else
+                            mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
+                            return;
+                    end
+                    [boolInterThet_i,thetMultiple_i,thetInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_thet,PARAMS.aInc);
+                    if boolInterThet_i then
+                        thetInter(i).entries = createAngleInterval(thetInter_i);
+                        if thetMultiple_i then
+                            mprintf("   THET - For leg %d, theta lies in %d different intervals\n", i, size(thetInter(i).entries,1));
+                        else
+                            mprintf("   THET - For leg %d, theta range is: %.4f to %.4f\n",i,thetInter(i).entries(1),thetInter(i).entries(2));
+                        end
+                    else
+                        mprintf("   THET - No intersection with leg %d workspace! Resampling psi...\n",i);
+                        break;
+                    end
+                end
+                if ~boolInterThet_i then continue; end
+                
+                //Sample (theta,X1)
+               [thetBoolFinal,thetFinalInterval] = intersectSetIntervals(thetInter);
+                if ~thetBoolFinal then
+                    mprintf("   THET - theta valid intervals do not intersect! Resampling psi...\n");
+                    continue;
+                end
+                
+                while kRx<PARAMS.kRx
+                    kRx = kRx +1;
+                    theta = sampleFromMultInterval(thetFinalInterval);
+                    mprintf("THETA - At iteration %d of %d:\n   Base theta: %.4f\n",kRx,PARAMS.kRx,theta);
+                    //Rotate base
+                    Rx1 = [1, 0, 0;0, cos(theta), -sin(theta);0 sin(theta) cos(theta)];
+                    T_EF_0 = T_EF_0*Rx1;
+                    phiInter=cell(1,size(WS_R0,3));
+                    arcDesc_phi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z2
+                    //Then (phi,Z2)
+                    for i=1:size(WS_R0,3)
+                        select STANCE(i).leg
+                            case 'FR' then
+                                offset_i = xOff + yOff;
+                            case 'FL' then
+                                offset_i = - xOff + yOff;
+                            case 'HR' then
+                                offset_i= + xOff - yOff;
+                            case 'HL' then
+                                offset_i = - xOff - yOff;
+                            else
+                                mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
+                                return;
+                        end
+                        [boolInterPhi_i,phiMultiple_i,phiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_phi,PARAMS.aInc);
+                        if boolInterPhi_i then
+                            phiInter(i).entries = createAngleInterval(phiInter_i);
+                            if phiMultiple_i then
+                                mprintf("   PHI - For leg %d, phi lies in %d different intervals\n", i, size(phiInter(i).entries,1));
+                            else
+                                mprintf("   PHI - For leg %d, phi range is: %.4f to %.4f\n",i,phiInter(i).entries(1),phiInter(i).entries(2));
+                            end
+                        else
+                            mprintf("   PHI - No intersection with leg %d workspace! Resampling theta...\n",i);
+                            break;
+                        end
+                    end
+                    if ~boolInterPhi_i then continue; end
+                    
+                    //Sample (phi,Z2)
+                    [phiBoolFinal,phiFinalInterval] = intersectSetIntervals(phiInter);
+                    if ~phiBoolFinal then
+                        mprintf("   PHI - phi valid intervals do not intersect! Resampling theta...\n");
+                        continue;
+                    end
+                    
+                    phi = sampleFromMultInterval(phiFinalInterval);
+                    mprintf("PHI - Base phi: %.4f\n",phi);
+                    
+                    mprintf("Base state sampled! Now using closed form IK for the legs...\n");
+                    
+                    
+                    return; // ADD CLOSED-FORM IK
+                end
+                //add error message
+            end
+            //add error message
         end
-        
+        //add error message
     end
     
 endfunction
