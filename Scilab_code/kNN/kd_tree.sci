@@ -2,8 +2,8 @@ function node_num = kd_tree(points,depth,parent_number)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
-    global cellIn;
-    global lcell;
+    global cellIn; //cell array
+    global lcell; //int
     
     //Description:
     //Computes a kd_tree from the dataset

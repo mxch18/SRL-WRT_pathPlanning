@@ -46,7 +46,7 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
     n=1;
     
     c = cos(angle_rot);
-    s = sin(angle_rot);
+     s = sin(angle_rot);
     R_mat = P+c*(I-P)+s*Q;
     Api_R0 = arcDesc.origin' + T_mat*R_mat*offset';
     

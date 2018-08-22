@@ -21,7 +21,7 @@ function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellD
     //OUTPUT
     //
     
-    //TODO: change function to handle multiple intervals in output
+    //TODO: change function to handle multiple intervals in output DONE
     
 //----------------------------------------------------------------------------//
     bool = %F;
