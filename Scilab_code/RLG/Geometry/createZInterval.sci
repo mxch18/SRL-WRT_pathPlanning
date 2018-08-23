@@ -1,4 +1,4 @@
-function intervalMatrix = createZInterval(interval_Array,zMax,d)
+function intervalMatrix = createZInterval(interval_Array,d)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -13,10 +13,13 @@ function intervalMatrix = createZInterval(interval_Array,zMax,d)
     
 //----------------------------------------------------------------------------//
     intervalMatrix = [];
+    interval_Array = unique(interval_Array);
     l = length(interval_Array);
     
+//    disp(zMax);disp(d);
+    
     if l==1 then
-        intervalMatrix = [-zMax, -zMax+d];
+        intervalMatrix = [interval_Array, interval_Array+d];
     else
         m = (1/4)*(2*l+(-1)^(l)+1);
         intervalMatrix = d*ones(m,2);

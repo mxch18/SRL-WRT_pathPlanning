@@ -1,9 +1,9 @@
 clear;clc;close();getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy");
 
-f1=struct('leg','HL','pos',[-0.25,-5,-4.5]);
-f2=struct('leg','FL','pos',[-0.25,-4.2,-4.5]);
-f3=struct('leg','HR','pos',[0.25,-5,-4.5]);
-f4=struct('leg','FR','pos',[0.25,-4.2,-4.5]);
+f1=struct('leg','HL','pos',[-2.3750e-1,-4.3146e-1,+1.9095e-2]);
+f2=struct('leg','FL','pos',[-2.3750e-1,+4.3146e-1,+1.9097e-2]);
+f3=struct('leg','HR','pos',[+2.3750e-1,-4.3146e-1,+1.9097e-2]);
+f4=struct('leg','FR','pos',[+2.3750e-1,+4.3146e-1,+1.9095e-2]);
 stance = [f1,f2,f3,f4];
 
 stance_pos_list=stance(:).pos;
@@ -21,15 +21,15 @@ foot_n = [foot_n;foot_n;foot_n;foot_n];
 extRad = 0.55*ones(1,4);
 intRad = 0*ones(1,4);
 
-params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.8,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5);
+params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5,'legLength',[0.1,0.15,0.3]);
 
 tic();
-[d,e,f,h,i,j,h]=RLG(stance,foot_n,params);
+[p,o,theta,succ,ik_ar]=RLG(stance,foot_n,params);
 disp(toc());
 
-oo = f'*[d.origin, 0]'+c';
+//oo = f'*[d.origin, 0]'+c';
 //oo(2)=oo(2)+4.5
-[xRect,yRect,zRect] = rect3D(oo',a,i,j,d.length,d.width);
+//[xRect,yRect,zRect] = rect3D(oo',a,i,j,d.length,d.width);
 
 //plot3d(xRect,yRect,zRect);
 //scatter3(e(:,1,1),e(:,2,1),e(:,3,1),"markerEdgeColor", "black","markerFaceColor", [0 .8 .8]);
