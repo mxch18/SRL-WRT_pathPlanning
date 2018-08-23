@@ -1,9 +1,10 @@
-function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,psiInter] = RLG(STANCE,NORMALS,PARAMS)
+function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
     //Description:
-    //[P,O,THET,SUCCESS]
+//    Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,psiInter,thetInter,phiInter
+    //[]
     
     //INPUT
     //STANCE: Row array of the current footholds. Contains struct describing
@@ -25,15 +26,18 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
     //              *PARAMS.tInc;
     //              *PARAMS.aInc;
     //              *PARAMS.baseDimensions: (1) on x, (2) on y;
+    //              *PARAMS.legLength: [l1,l2,l3]
     
     //OUTPUT
     //
     
-    //TODO : put angle range finding in function
+    //TODO : put psi/theta/phi range finding in function
     //       add closed-from IK
+    //       add augmented/non-augmented workspaces
+    //       put IK in function
     
 //----------------------------------------------------------------------------//
-    P = 0;O = 0;THET = 0;SUCCESS = %F;
+    P = 0;O = 0;THETA = 0;SUCCESS = %F;
     
     //Compute LS-fit plane by ACP
     stance_pos_list = STANCE(:).pos;
@@ -70,6 +74,7 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
         WSmi_R0 = [];
         WSmi_proj_RP = [];
         //shell descriptions
+//        augment_i = 
         shellDesc_i = struct('origin',stance_pos_array(i,:),'extRad',PARAMS.extRad(i),'intRad',PARAMS.intRad(i),'axis',NORMALS(i,:),'halfAngle',PARAMS.halfAngle);
         shellDesc(i) = shellDesc_i;
         
@@ -115,14 +120,14 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
 //        mprintf("XY - At iteration %d of %d:\nBase xy_RP position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_RP(1),pxy_RP(2));
         mprintf("XY - At iteration %d of %d:\nBase xy_R0 position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_R0(1),pxy_R0(2));
         
-        zInterval = cell(1,size(WS_R0,3));
+        zInterval = cell(1,foot_nb);
         //Compute intersections of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
         line_z = struct('origin',pxy_R0','direction',footPlane_z);
-        for i=1:size(WS_R0,3)
-            [boolInterZ_i,zMultiple_i,zInterval_i,zMax_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc(i),line_z,PARAMS.tInc);
+        for i=1:foot_nb
+            [boolInterZ_i,zMultiple_i,zInterval_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc(i),line_z,PARAMS.tInc);
 //            boolInterZ(i) = boolInterZ_i;
             if boolInterZ_i then
-                zInterval(i).entries = createZInterval(zInterval_i,zMax_i,d_i);
+                zInterval(i).entries = createZInterval(zInterval_i,d_i);
                 if zMultiple_i then
                     mprintf("   Z - For leg %d, z lies in %d different intervals", i, size(psiInter(i).entries,1));
                 else
@@ -152,14 +157,17 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
             //Compute intersections of Api arcs and WSmi for each rotation parameters
             //Rotations are represented by Euler angles (norm ZXZ): (psi,Z0);(thet,X1);(phi,Z2)
             base_R0 = [pxy_R0(1:2)', pz_R0];
+            
+            P = base_R0;
+            
             offset_i = [];
-            xOff = [1 0 0]*PARAMS.baseDimensions(1);
-            yOff = [0 1 0]*PARAMS.baseDimensions(2);
-            T_EF_0 = eye(3,3); //Transformation matrix between end-eff frame and R0. At first is identity.
-            psiInter=cell(1,size(WS_R0,3));
+            xOff = [1 0 0]*PARAMS.baseDimensions(1)/2;
+            yOff = [0 1 0]*PARAMS.baseDimensions(2)/2;
+            R_0_EF = eye(3,3); //Transformation matrix between end-eff frame and R0. At first is identity.
+            psiInter=cell(1,foot_nb);
             arcDesc_psi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z0
             //First start with (psi,Z0)
-            for i=1:size(WS_R0,3)
+            for i=1:foot_nb
                 select STANCE(i).leg
                     case 'FR' then
                         offset_i = xOff + yOff;
@@ -173,7 +181,7 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                         mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
                         return;
                 end
-                [boolInterPsi_i,psiMultiple_i,psiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_psi,PARAMS.aInc);
+                [boolInterPsi_i,psiMultiple_i,psiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_psi,PARAMS.aInc);
                 if boolInterPsi_i then
                     psiInter(i).entries = createAngleInterval(psiInter_i);
                     if psiMultiple_i then
@@ -202,11 +210,11 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                 mprintf("PSI - At iteration %d of %d:\n   Base psi: %.4f\n",kRz,PARAMS.kRz,psi);
                 //Rotate base
                 Rz0 = [cos(psi), -sin(psi), 0;sin(psi), cos(psi) 0;0 0 1];
-                T_EF_0 = T_EF_0*Rz0;
-                thetInter=cell(1,size(WS_R0,3));
+                R_0_EF = R_0_EF*Rz0;
+                thetInter=cell(1,foot_nb);
                 arcDesc_thet = struct('origin',base_R0,'normal',[1 0 0]) //rotation around X1
                 //Then (thet,X1)
-                for i=1:size(WS_R0,3)
+                for i=1:foot_nb
                     select STANCE(i).leg
                         case 'FR' then
                             offset_i = xOff + yOff;
@@ -220,7 +228,8 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                             mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
                             return;
                     end
-                    [boolInterThet_i,thetMultiple_i,thetInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_thet,PARAMS.aInc);
+                    [boolInterThet_i,thetMultiple_i,thetInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_thet,PARAMS.aInc);
+//                    disp(thetInter_i);
                     if boolInterThet_i then
                         thetInter(i).entries = createAngleInterval(thetInter_i);
                         if thetMultiple_i then
@@ -248,11 +257,11 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                     mprintf("THETA - At iteration %d of %d:\n   Base theta: %.4f\n",kRx,PARAMS.kRx,theta);
                     //Rotate base
                     Rx1 = [1, 0, 0;0, cos(theta), -sin(theta);0 sin(theta) cos(theta)];
-                    T_EF_0 = T_EF_0*Rx1;
-                    phiInter=cell(1,size(WS_R0,3));
+                    R_0_EF = R_0_EF*Rx1;
+                    phiInter=cell(1,foot_nb);
                     arcDesc_phi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z2
                     //Then (phi,Z2)
-                    for i=1:size(WS_R0,3)
+                    for i=1:foot_nb
                         select STANCE(i).leg
                             case 'FR' then
                                 offset_i = xOff + yOff;
@@ -266,7 +275,7 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                                 mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
                                 return;
                         end
-                        [boolInterPhi_i,phiMultiple_i,phiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,T_EF_0,shellDesc(i),arcDesc_phi,PARAMS.aInc);
+                        [boolInterPhi_i,phiMultiple_i,phiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_phi,PARAMS.aInc);
                         if boolInterPhi_i then
                             phiInter(i).entries = createAngleInterval(phiInter_i);
                             if phiMultiple_i then
@@ -291,16 +300,62 @@ function [Cxy,WS_proj_R0,footPlane_Rmat,zFinalInterval,footPlane_x,footPlane_y,p
                     phi = sampleFromMultInterval(phiFinalInterval);
                     mprintf("PHI - Base phi: %.4f\n",phi);
                     
-                    mprintf("Base state sampled! Now using closed form IK for the legs...\n");
+                    Rz2 = [cos(phi), -sin(phi), 0;sin(phi), cos(phi) 0;0 0 1];
+                    R_0_EF = R_0_EF*Rz2;
                     
+                    O = [psi,theta,phi];
                     
-                    return; // ADD CLOSED-FORM IK
+                    mprintf("\nBase state sampled! Now using closed form IK for the legs...\n");
+                    
+                    for i=1:foot_nb
+                        select STANCE(i).leg
+                            case 'FR' then
+                                offset_i = xOff + yOff;
+                                R_Leg_EF = [0 1 0;1 0 0;0 0 -1];
+                            case 'FL' then
+                                offset_i = - xOff + yOff;
+                                R_Leg_EF = [0 1 0;-1 0 0;0 0 1];
+                            case 'HR' then
+                                offset_i= + xOff - yOff;
+                                R_Leg_EF = [0 -1 0;1 0 0;0 0 1];
+                            case 'HL' then
+                                offset_i = - xOff - yOff;
+                                R_Leg_EF = [0 -1 0;-1 0 0;0 0 -1];
+                        end
+                        
+                        disp(offset_i);
+                        disp(R_0_EF);
+                        disp(R_Leg_EF);
+                        
+                        IK_target_RLeg = -R_Leg_EF*offset_i' + R_Leg_EF*R_0_EF'*(STANCE(i).pos'-base_R0'); //the foothold for the ith leg, in the leg base frame
+                        IK_target_array(:,i) = IK_target_RLeg;
+//                        disp(IK_target_RLeg);
+                        
+                        THETA(i,1) = atan(IK_target_RLeg(2),IK_target_RLeg(1));
+                        
+                        rem = sqrt(IK_target_RLeg(1)**2+IK_target_RLeg(2)**2)-PARAMS.legLength(1);
+                        nc3 = IK_target_RLeg(3)**2+rem**2-PARAMS.legLength(2)**2-PARAMS.legLength(3)**2;
+                        dc3 = 2*PARAMS.legLength(2)*PARAMS.legLength(3);
+                        c3 = nc3/dc3;
+                        
+                        if abs(c3)>1 then
+                            disp(c3)
+                            mprintf("IK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
+                            return;
+                        end
+                        s3 = sqrt(1-c3**2); //ELBOw UP
+                        THETA(i,3) = atan(s3,c3);
+                        
+                        THETA(i,2) = atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3)
+                    end
+                    SUCCESS=%T;
+                    return;
                 end
-                //add error message
+                mprintf("THET - Reached maximum number of trials, aborting...");
             end
-            //add error message
+            mprintf("PSI - Reached maximum number of trials, aborting...");
         end
-        //add error message
+        mprintf("Z - Reached maximum number of trials, aborting...");
     end
-    
+    mprintf("XY - Reached maximum number of trials, aborting...");
 endfunction
