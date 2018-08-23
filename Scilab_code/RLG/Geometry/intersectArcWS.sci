@@ -1,4 +1,4 @@
-function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellDesc,arcDesc,aInc)
+function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,R_mat,shellDesc,arcDesc,aInc)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -9,7 +9,7 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
     //WSmi_R0: the workspace approximation in R0;
     //offset : the point to which the kinematic chain is attached to the end 
     //        effector, in the end effector frame;
-    //Tmat: the transformation matrix between EF frame and R0;
+    //R_mat: the rotation matrix between EF frame and R0;
     //shellDesc: a struct containing the shell parameters
     //              *shellDesc.origin
     //              *shellDesc.extRad
@@ -46,9 +46,9 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
     n=1;
     
     c = cos(angle_rot);
-     s = sin(angle_rot);
-    R_mat = P+c*(I-P)+s*Q;
-    Api_R0 = arcDesc.origin' + T_mat*R_mat*offset';
+    s = sin(angle_rot);
+    Rot_mat = P+c*(I-P)+s*Q;
+    Api_R0 = arcDesc.origin' + R_mat*Rot_mat*offset';
     
     if isInShell(shellDesc,Api_R0') then
         bool = %T;
@@ -67,8 +67,8 @@ function [bool,multiple,angleRange] = intersectArcWS(WSmi_R0,offset,T_mat,shellD
         c = cos(angle_rot);
         s = sin(angle_rot);
 //        R_mat = [ux**2*(1-c)+c ux*uy*(1-c)-uz*s ux*uz*(1-c)+uy*s;ux*uy*(1-c)+uz*s uy**2*(1-c)+c uy*uz*(1-c)-ux*s;ux*uz*(1-c)-uy*s uy*uz*(1-c)+ux*s uz**2*(1-c)+c];
-        R_mat = P+c*(I-P)+s*Q;
-        Api_R0 = arcDesc.origin' + T_mat*R_mat*offset'; //the attachment point in R0
+        Rot_mat = P+c*(I-P)+s*Q;
+        Api_R0 = arcDesc.origin' + R_mat*Rot_mat*offset'; //the attachment point in R0
         if isInShell(shellDesc,Api_R0') then
             bool = %T;
             boolLast = boolNow;

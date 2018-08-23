@@ -1,4 +1,4 @@
-function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
+function [bool,multiple,zInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -25,6 +25,8 @@ function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellD
     
 //----------------------------------------------------------------------------//
     bool = %F;
+//    zMax=%inf;
+    distMax=%inf;
     multiple = %F;
     zInterval = [];
     
@@ -46,7 +48,6 @@ function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellD
     pt(1) = lineDesc.origin(1)+t*lineDesc.direction(1);
     pt(2) = lineDesc.origin(2)+t*lineDesc.direction(2);
     pt(3) = lineDesc.origin(3)+t*lineDesc.direction(3);
-    zMax = abs(pt(3));
     
     k=1;
     
@@ -54,6 +55,7 @@ function [bool,multiple,zInterval,zMax,distMax] = intersectLineWS(WSmi_R0,shellD
         bool = %T;
         boolLast = %T;
         boolNow = %T;
+//        zMax = abs(pt(3));
         zInterval(k) = pt(3);
         k = k+1;
     else

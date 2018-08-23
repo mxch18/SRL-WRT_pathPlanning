@@ -1,6 +1,7 @@
 clear;clc;getd(".");
 close();
 
+l1 = 0.1;
 l2 = 0.15;
 l3 = 0.3;
 fact = 1;
