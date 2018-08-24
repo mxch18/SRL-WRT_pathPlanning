@@ -1,7 +1,7 @@
 IK_target_RLeg_real = [0.069828271865844727, 0.23262149095535278, 0.35102164745330811]; //the foothold for the ith leg, in the leg attachment frame
 //disp(IK_target_RLeg);
 
-//FR Leg
+//HR Leg
 
 l1 = 0.1;
 l2 = 0.15;
@@ -20,9 +20,9 @@ posi = [-0.0200745 0.0028024 0.1932086];
 
 Rz0 = [cos(psi), -sin(psi), 0;sin(psi), cos(psi) 0;0 0 1];
 Rx1 = [1, 0, 0;0, cos(theta), -sin(theta);0 sin(theta) cos(theta)];
-Rz2 = [cos(phi), -sin(phi), 0;sin(phi), cos(phi) 0;0 0 1];
+Ry2 = [cos(phi), 0, sin(phi);0, 1 0;-sin(phi) 0 cos(phi)];
 
-R_0_EF = Rz0*Rx1*Rz2;
+R_0_EF = Rz0*Rx1*Ry2;
 
 disp(R_0_EF);
 

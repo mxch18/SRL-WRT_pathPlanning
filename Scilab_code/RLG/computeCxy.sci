@@ -1,4 +1,4 @@
-function Cxy = computeCxy(WSmiProj,axis,shrink)
+function Cxy = computeCxy(WSmiProj,axis)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     

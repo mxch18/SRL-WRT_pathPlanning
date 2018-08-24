@@ -21,11 +21,32 @@ foot_n = [foot_n;foot_n;foot_n;foot_n];
 extRad = 0.55*ones(1,4);
 intRad = 0*ones(1,4);
 
-params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5,'legLength',[0.1,0.15,0.3]);
+params = struct('extRad',extRad,'intRad',intRad,'halfAngle',%pi/4,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5,'legLength',[0.1,0.15,0.3]);
 
 tic();
-[p,o,theta,succ,ik_ar]=RLG(stance,foot_n,params);
+[p,o,thet,rmat,succ,ws_proj]=RLG(stance,foot_n,params);
 disp(toc());
+disp(rmat)
+
+toDeg = 180/%pi;
+
+if succ then
+    filen = mopen("./robot_state.txt","w");
+    mfprintf(filen,"%f %f %f\n",p(1),p(2),p(3));
+//    mfprintf(filen,"%f %f %f\n",o(1),o(2),o(3));
+    for i = 1:3
+        mfprintf(filen,"%f %f %f\n",rmat(i,1),rmat(i,2),rmat(i,3));
+    end
+    for i = 1:size(thet,1)
+        mfprintf(filen,"%f %f %f\n",thet(i,1),thet(i,2),thet(i,3));
+    end
+    
+    for i=1:size(stance,2)
+        mfprintf(filen,"%f %f %f\n",stance(i).pos(1),stance(i).pos(2),stance(i).pos(3));
+    end
+    
+    mclose(filen);
+end
 
 //oo = f'*[d.origin, 0]'+c';
 //oo(2)=oo(2)+4.5

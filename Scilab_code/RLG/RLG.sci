@@ -1,4 +1,4 @@
-function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
+function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -32,12 +32,11 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
     //
     
     //TODO : put psi/theta/phi range finding in function
-    //       add closed-from IK
-    //       add augmented/non-augmented workspaces
+    //       !!!!!!!!!!!!!!!!!!! ADD AUGMENTED WORKSPACES !!!!!!!!!!!!!!!!!!!!
     //       put IK in function
     
 //----------------------------------------------------------------------------//
-    P = 0;O = 0;THETA = 0;SUCCESS = %F;
+    P = 0;O = 0;THETA = 0;SUCCESS = %F;RMAT = 0;
     
     //Compute LS-fit plane by ACP
     stance_pos_list = STANCE(:).pos;
@@ -79,7 +78,7 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
         shellDesc(i) = shellDesc_i;
         
         WSmi_alpha = linspace(0,2*%pi,PARAMS.shellPtsNb);
-        WSmi_theta = linspace(0,shellDesc_i.halfAngle,PARAMS.shellPtsNb);
+        WSmi_theta = linspace(%pi/2-shellDesc_i.halfAngle,%pi/2,PARAMS.shellPtsNb);
         
         [x1,y1,z1] = halfSph(shellDesc_i.origin,shellDesc_i.extRad,WSmi_alpha,WSmi_theta,shellDesc_i.axis);
         WSmi_R0 = [x1',y1',z1'];
@@ -155,7 +154,7 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
             mprintf('Z - At iteration %d of %d:\n   Base z_R0 position: %.4f\n",kpz,PARAMS.kpz,pz_R0);
             
             //Compute intersections of Api arcs and WSmi for each rotation parameters
-            //Rotations are represented by Euler angles (norm ZXZ): (psi,Z0);(thet,X1);(phi,Z2)
+            //Rotations are represented by Euler angles (norm ZXY): (psi,Z0);(thet,X1);(phi,Y2)
             base_R0 = [pxy_R0(1:2)', pz_R0];
             
             P = base_R0;
@@ -259,8 +258,8 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
                     Rx1 = [1, 0, 0;0, cos(theta), -sin(theta);0 sin(theta) cos(theta)];
                     R_0_EF = R_0_EF*Rx1;
                     phiInter=cell(1,foot_nb);
-                    arcDesc_phi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z2
-                    //Then (phi,Z2)
+                    arcDesc_phi = struct('origin',base_R0,'normal',[0 1 0]) //rotation around Y2
+                    //Then (phi,Y2)
                     for i=1:foot_nb
                         select STANCE(i).leg
                             case 'FR' then
@@ -290,7 +289,7 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
                     end
                     if ~boolInterPhi_i then continue; end
                     
-                    //Sample (phi,Z2)
+                    //Sample (phi,Y2)
                     [phiBoolFinal,phiFinalInterval] = intersectSetIntervals(phiInter);
                     if ~phiBoolFinal then
                         mprintf("   PHI - phi valid intervals do not intersect! Resampling theta...\n");
@@ -300,8 +299,10 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
                     phi = sampleFromMultInterval(phiFinalInterval);
                     mprintf("PHI - Base phi: %.4f\n",phi);
                     
-                    Rz2 = [cos(phi), -sin(phi), 0;sin(phi), cos(phi) 0;0 0 1];
-                    R_0_EF = R_0_EF*Rz2;
+                    Ry2 = [cos(phi), 0, sin(phi);0, 1 0;-sin(phi) 0 cos(phi)];
+                    R_0_EF = R_0_EF*Ry2;
+                    
+                    RMAT = R_0_EF;
                     
                     O = [psi,theta,phi];
                     
@@ -312,20 +313,32 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
                             case 'FR' then
                                 offset_i = xOff + yOff;
                                 R_Leg_EF = [0 1 0;1 0 0;0 0 -1];
+                                factor_t2 = -1;
+                                factor_t3 = -1;
+                                factor_elbow = +1;
                             case 'FL' then
                                 offset_i = - xOff + yOff;
                                 R_Leg_EF = [0 1 0;-1 0 0;0 0 1];
+                                factor_t2 = +1;
+                                factor_t3 = +1;
+                                factor_elbow = -1;
                             case 'HR' then
                                 offset_i= + xOff - yOff;
                                 R_Leg_EF = [0 -1 0;1 0 0;0 0 1];
+                                factor_t2 = +1;
+                                factor_t3 = +1;
+                                factor_elbow = -1;
                             case 'HL' then
                                 offset_i = - xOff - yOff;
                                 R_Leg_EF = [0 -1 0;-1 0 0;0 0 -1];
+                                factor_t2 = -1;
+                                factor_t3 = -1;
+                                factor_elbow = +1;
                         end
                         
-                        disp(offset_i);
-                        disp(R_0_EF);
-                        disp(R_Leg_EF);
+//                        disp(offset_i);
+//                        disp(R_0_EF);
+//                        disp(R_Leg_EF);
                         
                         IK_target_RLeg = -R_Leg_EF*offset_i' + R_Leg_EF*R_0_EF'*(STANCE(i).pos'-base_R0'); //the foothold for the ith leg, in the leg base frame
                         IK_target_array(:,i) = IK_target_RLeg;
@@ -339,14 +352,14 @@ function [P,O,THETA,SUCCESS,IK_target_array] = RLG(STANCE,NORMALS,PARAMS)
                         c3 = nc3/dc3;
                         
                         if abs(c3)>1 then
-                            disp(c3)
+//                            disp(c3)
                             mprintf("IK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
                             return;
                         end
-                        s3 = sqrt(1-c3**2); //ELBOw UP
-                        THETA(i,3) = atan(s3,c3);
+                        s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
+                        THETA(i,3) = factor_t3*atan(s3,c3);
                         
-                        THETA(i,2) = atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3)
+                        THETA(i,2) = factor_t2*(atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3))
                     end
                     SUCCESS=%T;
                     return;
