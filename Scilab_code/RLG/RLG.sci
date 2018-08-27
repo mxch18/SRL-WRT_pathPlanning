@@ -1,4 +1,4 @@
-function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
+function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -15,6 +15,7 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
     //PARAMS: a struct containing all the parameters relating to the robot 
     //        geometry, as well as problem-specific parameters:
     //              *PARAMS.extRad;
+    //              *PARAMS.distApiOb: distances between the leg attachment and the EoF CoM
     //              *PARAMS.intRad;
     //              *PARAMS.halfAngle;
     //              *PARAMS.shellPtsNb;
@@ -27,6 +28,7 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
     //              *PARAMS.aInc;
     //              *PARAMS.baseDimensions: (1) on x, (2) on y;
     //              *PARAMS.legLength: [l1,l2,l3]
+    //              *PARAMS.verbose: %T or %F
     
     //OUTPUT
     //
@@ -73,18 +75,21 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
         WSmi_R0 = [];
         WSmi_proj_RP = [];
         //shell descriptions
-//        augment_i = 
+        
         shellDesc_i = struct('origin',stance_pos_array(i,:),'extRad',PARAMS.extRad(i),'intRad',PARAMS.intRad(i),'axis',NORMALS(i,:),'halfAngle',PARAMS.halfAngle);
         shellDesc(i) = shellDesc_i;
         
-        WSmi_alpha = linspace(0,2*%pi,PARAMS.shellPtsNb);
-        WSmi_theta = linspace(%pi/2-shellDesc_i.halfAngle,%pi/2,PARAMS.shellPtsNb);
+        shellDesc_AUG_i = struct('origin',stance_pos_array(i,:),'extRad',PARAMS.extRad(i)+PARAMS.distApiOb(i),'intRad',PARAMS.intRad(i),'axis',NORMALS(i,:),'halfAngle',PARAMS.halfAngle);
+        shellDesc_AUG(i) = shellDesc_AUG_i;
         
-        [x1,y1,z1] = halfSph(shellDesc_i.origin,shellDesc_i.extRad,WSmi_alpha,WSmi_theta,shellDesc_i.axis);
+        WSmi_alpha = linspace(0,2*%pi,PARAMS.shellPtsNb);
+        WSmi_theta = linspace(%pi/2-shellDesc_AUG_i.halfAngle,%pi/2,PARAMS.shellPtsNb);
+        
+        [x1,y1,z1] = halfSph(shellDesc_AUG_i.origin,shellDesc_AUG_i.extRad,WSmi_alpha,WSmi_theta,shellDesc_AUG_i.axis);
         WSmi_R0 = [x1',y1',z1'];
         
         if shellDesc_i.intRad then
-            [x2,y2,z2] = halfSph(shellDesc_i.origin,shellDesc_i.intRad,WSmi_alpha,WSmi_theta,shellDesc_i.axis);
+            [x2,y2,z2] = halfSph(shellDesc_AUG_i.origin,shellDesc_AUG_i.intRad,WSmi_alpha,WSmi_theta,shellDesc_AUG_i.axis);
             WSmi_R0 = [WSmi_R0;x2' y2' z2'];
         end
         WS_R0(:,:,i) = WSmi_R0;
@@ -123,7 +128,7 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
         //Compute intersections of the line perpendicular to footPlane, going through pxy_R0, with the WSmi
         line_z = struct('origin',pxy_R0','direction',footPlane_z);
         for i=1:foot_nb
-            [boolInterZ_i,zMultiple_i,zInterval_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc(i),line_z,PARAMS.tInc);
+            [boolInterZ_i,zMultiple_i,zInterval_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc_AUG(i),line_z,PARAMS.tInc);
 //            boolInterZ(i) = boolInterZ_i;
             if boolInterZ_i then
                 zInterval(i).entries = createZInterval(zInterval_i,d_i);
@@ -353,7 +358,7 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
                         
                         if abs(c3)>1 then
 //                            disp(c3)
-                            mprintf("IK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
+                            mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
                             return;
                         end
                         s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
@@ -364,11 +369,11 @@ function [P,O,THETA,RMAT,SUCCESS,WS_proj_RP] = RLG(STANCE,NORMALS,PARAMS)
                     SUCCESS=%T;
                     return;
                 end
-                mprintf("THET - Reached maximum number of trials, aborting...");
+                mprintf("THET - Reached maximum number of trials, resampling psi...\n");
             end
-            mprintf("PSI - Reached maximum number of trials, aborting...");
+            mprintf("PSI - Reached maximum number of trials, resampling z...\n");
         end
-        mprintf("Z - Reached maximum number of trials, aborting...");
+        mprintf("Z - Reached maximum number of trials, resampling XY...\n");
     end
-    mprintf("XY - Reached maximum number of trials, aborting...");
+    mprintf("XY - Reached maximum number of trials, aborting...\n");
 endfunction

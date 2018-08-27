@@ -1,4 +1,4 @@
-clear;clc;getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
+clear;getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
 
 stance = [-2.3750e-1,-4.3146e-1,+1.9095e-2;-2.3750e-1,+4.3146e-1,+1.9097e-2;+2.3750e-1,-4.3146e-1,+1.9097e-2;+2.3750e-1,+4.3146e-1,+1.9095e-2];
 
