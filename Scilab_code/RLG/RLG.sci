@@ -107,7 +107,7 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
 //    disp(toc())
     
     //Compute Cxy
-    tic()
+//    tic()
     Cxy = computeCxy(WS_proj_RP,[1 0;0 1]);
     if isnan(Cxy.origin) then
         if PARAMS.verbose then
@@ -115,7 +115,7 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         end
         return;
     end
-    disp(toc())
+//    disp(toc())
     //Sample pxy_RP, transform into pxy_R0
     kpxy = 0;
     while kpxy<PARAMS.kpxy
@@ -406,6 +406,9 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                         THETA(i,2) = factor_t2*(atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3))
                     end
                     SUCCESS=%T;
+                    if PARAMS.verbose then
+                        mprintf("\nSUCCESS!\n");
+                    end
                     return;
                 end
                 
