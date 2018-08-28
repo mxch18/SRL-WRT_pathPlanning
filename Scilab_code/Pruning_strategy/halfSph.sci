@@ -15,8 +15,8 @@ function [x,y,z]=halfSph(orig,r,alp,tet,direction)
     z = zeros(1,lalp*ltet);
     p = zeros(3,1);
     
-    for i=1:lalp
-        for j=1:ltet
+    for j=1:ltet
+        for i=1:lalp
             p(1) = r*cos(alp(i))*cos(tet(j));
             p(2) = r*sin(alp(i))*cos(tet(j));
             p(3) = r*sin(tet(j));

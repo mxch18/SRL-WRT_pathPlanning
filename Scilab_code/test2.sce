@@ -1,4 +1,4 @@
-clear;getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
+clear;close();getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
 
 stance = [-2.3750e-1,-4.3146e-1,+1.9095e-2;-2.3750e-1,+4.3146e-1,+1.9097e-2;+2.3750e-1,-4.3146e-1,+1.9097e-2;+2.3750e-1,+4.3146e-1,+1.9095e-2];
 
@@ -21,9 +21,9 @@ xproj = projectionPlan(xtoproj,orig,n);
 //scatter3(xproj(1)*ones(1,2),xproj(2)*ones(1,2),xproj(3)*ones(1,2),50,'green');
 
 alp=linspace(0,2*%pi,20);
-tet=linspace(%pi/4,%pi/2,20);
+tet=linspace(0,%pi/2,20);
 rHS = 0.55+0.17;
-dirHS = [0 0 1];
+dirHS = [0 1 0];
 ctLift = floor(rand(1,3)*50);
 [xHS,yHS,zHS]=halfSph(stance(1,:),rHS,alp,tet,dirHS);
 [xHS1,yHS1,zHS1]=halfSph(stance(2,:),rHS,alp,tet,dirHS)//+rand(1,3));
