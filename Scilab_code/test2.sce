@@ -1,6 +1,7 @@
 clear;close();getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy")
 
-stance = [-2.3750e-1,-4.3146e-1,+1.9095e-2;-2.3750e-1,+4.3146e-1,+1.9097e-2;+2.3750e-1,-4.3146e-1,+1.9097e-2;+2.3750e-1,+4.3146e-1,+1.9095e-2];
+//stance = [-2.3750e-1,-4.3146e-1,+1.9095e-2;-2.3750e-1,+4.3146e-1,+1.9097e-2;+2.3750e-1,-4.3146e-1,+1.9097e-2;+2.3750e-1,+4.3146e-1,+1.9095e-2];
+stance = [-2.3750e-1,0,-4.3146e-1;-2.3750e-1,0,+4.3146e-1;+2.3750e-1,0,-4.3146e-1;+2.3750e-1,0,+4.3146e-1];
 
 [a,b,c] = plane_ACP(stance);
 
@@ -20,7 +21,7 @@ xproj = projectionPlan(xtoproj,orig,n);
 //scatter3(xtoproj(1)*ones(1,2),xtoproj(2)*ones(1,2),xtoproj(3)*ones(1,2),50,'red');
 //scatter3(xproj(1)*ones(1,2),xproj(2)*ones(1,2),xproj(3)*ones(1,2),50,'green');
 
-alp=linspace(0,2*%pi,20);
+alp=linspace(0,2*%pi,2*20);
 tet=linspace(0,%pi/2,20);
 rHS = 0.55+0.17;
 dirHS = [0 1 0];

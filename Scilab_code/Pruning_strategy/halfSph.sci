@@ -8,13 +8,13 @@ function [x,y,z]=halfSph(orig,r,alp,tet,direction)
     
     alpOffset = atan(direction(2),direction(1));
     tetOffset = atan(norm(cross(direction,[0 0 1])),direction*[0;0;1]);
-    disp(alpOffset)
-    disp(tetOffset)
+//    disp(alpOffset)
+//    disp(tetOffset)
 //    Rprel = [0 0 1;0 1 0;-1 0 0];
     Ralp = [cos(alpOffset) -sin(alpOffset) 0;sin(alpOffset) cos(alpOffset) 0;0 0 1];
     Rtet = [cos(tetOffset) 0 sin(tetOffset);0 1 0;-sin(tetOffset) 0 cos(tetOffset)];
-    disp(Ralp)
-    disp(Rtet)
+//    disp(Ralp)
+//    disp(Rtet)
     lalp = length(alp);
     ltet = length(tet);
     x = zeros(1,lalp*ltet);
