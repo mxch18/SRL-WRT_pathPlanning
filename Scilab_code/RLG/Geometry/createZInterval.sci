@@ -19,7 +19,7 @@ function intervalMatrix = createZInterval(interval_Array,d)
 //    disp(zMax);disp(d);
     
     if l==1 then
-        intervalMatrix = [interval_Array, interval_Array+d];
+        intervalMatrix = [interval_Array, d];
     else
         m = (1/4)*(2*l+(-1)^(l)+1);
         intervalMatrix = d*ones(m,2);

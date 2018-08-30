@@ -1,4 +1,4 @@
-function [bool,multiple,zInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
+function [bool,multiple,tInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,lineDesc,tInc)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -21,14 +21,14 @@ function [bool,multiple,zInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,l
     //OUTPUT
     //
     
-    //TODO: change function to handle multiple intervals in output DONE
+    //TODO: 
     
 //----------------------------------------------------------------------------//
     bool = %F;
 //    zMax=%inf;
     distMax=%inf;
     multiple = %F;
-    zInterval = [];
+    tInterval = [];
     
     //Project all points from WSmi_R0 onto the line. Collect distances
     dim = size(WSmi_R0,1);
@@ -56,7 +56,7 @@ function [bool,multiple,zInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,l
         boolLast = %T;
         boolNow = %T;
 //        zMax = abs(pt(3));
-        zInterval(k) = pt(3);
+        tInterval(k) = t;
         k = k+1;
     else
         boolLast = %F;
@@ -75,20 +75,20 @@ function [bool,multiple,zInterval,distMax] = intersectLineWS(WSmi_R0,shellDesc,l
             boolLast = boolNow;
             boolNow = %T;
             if (~boolLast&boolNow)|(boolLast&~boolNow) then
-                zInterval(k) = pt(3);
+                tInterval(k) = t;
                 k = k+1;
             end
         else
             boolLast = boolNow;
             boolNow = %F;
             if (~boolLast&boolNow)|(boolLast&~boolNow) then
-                zInterval(k) = pt(3)-tInc;
+                tInterval(k) = t-tInc;
                 k = k+1;
             end
         end
     end
     
-    if length(zInterval)>2 then
+    if length(tInterval)>2 then
         multiple = %T;
     end
     
