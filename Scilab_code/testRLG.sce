@@ -1,4 +1,4 @@
-clear;clc;close();getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy");
+clear;clc;close();getd(".");getd("./kNN");getd("./RLG");getd("./RLG/Geometry");getd("./Pruning_strategy");getd("./Local_Planner");
 
 f1=struct('leg','HL','pos',[-2.3750e-1,-4.3146e-1,+1.9095e-2]);
 f2=struct('leg','FL','pos',[-2.3750e-1,+4.3146e-1,+1.9097e-2]);
@@ -21,7 +21,7 @@ end
 [a,b,c] = plane_ACP(stance_pos_array);
 [x,y,z] = rect3D(c,a);
 
-foot_n = [0 0 -1];
+foot_n = [0 0 1];
 foot_n = [foot_n;foot_n;foot_n;foot_n];
 
 extRad = 0.55*ones(1,4);

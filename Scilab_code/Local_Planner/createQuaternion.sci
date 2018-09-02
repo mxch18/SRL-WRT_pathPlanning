@@ -10,12 +10,11 @@ function q = createQuaternion(alpha,u)
     //u: axis of rotation
     
     //OUTPUT
-    //d : distance between the two quaternions according to this metric:
-    //          d = 1 - abs(q1.q2)
-    //see paper [] for reference
+    //q: the quaternion of unit magnitude representing the rotation of alpha around u
 //----------------------------------------------------------------------------//
     u = u/norm(u);
     
     q = [cos(alpha/2), sin(alpha/2)*u(1), sin(alpha/2)*u(2), sin(alpha/2)*u(3)];
+    q = q/norm(q);
     
 endfunction
