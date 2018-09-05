@@ -7,13 +7,14 @@ f4=struct('leg','FR','pos',[+2.3750e-1,+4.3146e-1,+1.9095e-2]);
 
 stance = [f1,f2,f3,f4];
 
-p1 = [0 0 0];
-q1 = createQuaternion(0,[1 0 0]);
+p1 = [0 0 +1.4900e-1];
+q1 = createQuaternion(0,[0 0 1]);
 
 c1 = [p1 q1];
 
-p2 = [0 0 0.37];
-q2 = createQuaternion(3*%pi/20,[0 0 1]);
+p2 = [0 0 +1.4900e-1];
+ang = -%pi/4+rand()*%pi/2;
+q2 = createQuaternion(ang,rand(1,3));
 
 c2 = [p2 q2];
 
