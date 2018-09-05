@@ -25,10 +25,11 @@ params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle
 
 leg_theta = localPlanner(c1,c2,50,params,stance);
 
-leg_file = mopen('./leg_theta','w');
+leg_file = mopen("./leg_theta.txt","w");
 
 for i = 1:size(leg_theta,1)
-    mfprintf(leg_file,"%f %f %f %f %f %f %f %f %f %f %f %f\n",leg_file(1),leg_file(2),leg_file(3),leg_file(4),leg_file(5),leg_file(6),leg_file(7),leg_file(8),leg_file(9),leg_file(10),leg_file(11),leg_file(12));
+    mfprintf(leg_file,"%f %f %f %f %f %f %f %f %f %f %f %f\n",leg_theta(i,1),leg_theta(i,2),leg_theta(i,3),leg_theta(i,4),leg_theta(i,5),leg_theta(i,6),leg_theta(i,7),..
+    leg_theta(i,8),leg_theta(i,9),leg_theta(i,10),leg_theta(i,11),leg_theta(i,12));
 end
 
 mclose(leg_file);

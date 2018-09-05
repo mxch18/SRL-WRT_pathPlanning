@@ -39,7 +39,7 @@ function legPath = localPlanner(config1,config2,s,PARAMS,STANCE)
     
     for j=1:size(rigidBodyPath,1)
         base_R0 = rigidBodyPath(j,1:3);
-        mprintf("\nAt iteration %d, base_R0 : %.2f %.2f %.2f\n",j,base_R0(1),base_R0(2),base_R0(3));
+//        mprintf("\nAt iteration %d, base_R0 : %.2f %.2f %.2f\n",j,base_R0(1),base_R0(2),base_R0(3));
         base_Q = rigidBodyPath(j,4:7);
         for i=1:foot_nb
             select STANCE(i).leg
@@ -74,7 +74,7 @@ function legPath = localPlanner(config1,config2,s,PARAMS,STANCE)
             
             IK_target_RLeg = -quatMult(quatMult(leg_ef_q,[0 offset_i]),invQuat(leg_ef_q)) + quatMult(quatMult(transf_Q,[0 stance_pos]),invQuat(transf_Q)); //the foothold for the ith leg, in the leg base frame
             IK_target_RLeg = IK_target_RLeg(2:4);
-            mprintf("\nIK - At iteration %d, for leg %s inverse kinematic, IK_target: %.2f %.2f %.2f\n",j,STANCE(i).leg,IK_target_RLeg(1),IK_target_RLeg(2),IK_target_RLeg(3));
+//            mprintf("\nIK - At iteration %d, for leg %s inverse kinematic, IK_target: %.2f %.2f %.2f\n",j,STANCE(i).leg,IK_target_RLeg(1),IK_target_RLeg(2),IK_target_RLeg(3));
 //            IK_target_array(:,i) = IK_target_RLeg;
             
             THETA(i,1) = atan(IK_target_RLeg(2),IK_target_RLeg(1));
@@ -83,7 +83,7 @@ function legPath = localPlanner(config1,config2,s,PARAMS,STANCE)
             nc3 = IK_target_RLeg(3)**2+rem**2-PARAMS.legLength(2)**2-PARAMS.legLength(3)**2;
             dc3 = 2*PARAMS.legLength(2)*PARAMS.legLength(3);
             c3 = nc3/dc3;
-            mprintf("\nIK - At iteration %d, for leg %s inverse kinematic, c3 = %.4f\n",j,STANCE(i).leg,c3);
+//            mprintf("\nIK - At iteration %d, for leg %s inverse kinematic, c3 = %.4f\n",j,STANCE(i).leg,c3);
             
             if abs(c3)>1 then
                 mprintf("\nIK - At iteration %d, no solution for leg %s inverse kinematic\n",j,STANCE(i).leg);
