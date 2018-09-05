@@ -1,4 +1,4 @@
-function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
+function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -31,14 +31,20 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //              *PARAMS.verbose: %T or %F
     
     //OUTPUT
-    //
+    //P: the base position
+    //Q: the quaternion defining the rotation
+    //THETA: the leg's joint angles
+    //RMAT: the rotation matrix
+    //SUCCESS: boolean for benchmarking purposes (atm)
     
     //TODO : put psi/theta/phi range finding in function
-    //       could you put bounds on phi so that it doesn't flip over?
+    //       could you put bounds on phi so that it doesn't flip over? NAH(?)
     //       put IK in function
+    //       Remove RMAT output
+    //       Change rotation parametrization to full quaternion
     
 //----------------------------------------------------------------------------//
-    P = 0;O = 0;THETA = 0;SUCCESS = %F;RMAT = 0;
+    P = 0;Q = 0;THETA = 0;SUCCESS = %F;RMAT = 0;
     
     //Compute LS-fit plane by ACP
     stance_pos_list = STANCE(:).pos;
@@ -114,6 +120,8 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
 //    footPlane_y = cross(footPlane_z,footPlane_x);
 //    disp(footPlane_z);
     footPlane_Rmat = [footPlane_x;footPlane_y;footPlane_z];
+    [footPlane_angle,footPlane_vector] = angle_vector_FromMat(footPlane_Rmat);
+    footPlane_Q = createQuaternion(footPlane_angle,footPlane_vector);
 //    disp(footPlane_Rmat);
     
     //Compute leg approximate workspaces. Project them on footPlane.
@@ -282,6 +290,8 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                 
                 //Rotate base
                 Rz0 = [cos(psi), -sin(psi), 0;sin(psi), cos(psi) 0;0 0 1];
+                [Rz0_angle,Rz0_vector] = angle_vector_FromMat(Rz0);
+                Rz0_Q = createQuaternion(Rz0_angle,Rz0_vector);
                 R_0_EF = R_0_EF*Rz0;
                 thetInter=cell(1,foot_nb);
                 arcDesc_thet = struct('origin',base_R0,'normal',[1 0 0]) //rotation around X1
@@ -382,6 +392,8 @@ function [P,O,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                         end
                         continue;
                     end
+                    
+//                    phiFinalInterval = 0.5*phiFinalInterval;
                     
                     phi = sampleFromMultInterval(phiFinalInterval);
                     if PARAMS.verbose then
