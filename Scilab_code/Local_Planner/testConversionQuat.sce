@@ -7,12 +7,15 @@ q3 = createQuaternion(-%pi/4,[1 0 1]);
 q4 = createQuaternion(-3*%pi/2,[1 1 0]);
 q5 = createQuaternion(-%pi/3,[0 0 1]);
 
-vector = [1  1 1];
-angle = %pi;
+vector = [-1 -1 1];
+angle = %pi/2;
 
 R = matrix_fromAngleVector(angle,vector);
 
 [a,b] = angle_vector_FromMat(R);
 
+q = createQuaternion(a,b);
+
 disp(a)
 disp(b)
+disp(q)

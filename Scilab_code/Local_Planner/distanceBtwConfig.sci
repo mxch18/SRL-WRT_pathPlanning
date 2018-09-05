@@ -15,8 +15,8 @@ function distance = distanceBtwConfig(config1,config2)
     //OUTPUT
     //distance: the weighted distance according to the employed metrics
 //----------------------------------------------------------------------------//
-    R3_weight = 0.5;
-    SO3_weight = 50;
+    R3_weight = 3;
+    SO3_weight = 40;
     
     distance = R3_weight*norm(config1(1:3)-config2(1:3))+..
                SO3_weight*distQuat(config1(4:7),config2(4:7));
