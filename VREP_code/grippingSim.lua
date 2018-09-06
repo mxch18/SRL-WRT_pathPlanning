@@ -2,6 +2,10 @@
 
 function sysCall_init()
 
+	joint_1_FL = sim.getObjectHandle('joint_1_FL')
+  joint_2_FL = sim.getObjectHandle('joint_2_FL')
+  joint_3_FL = sim.getObjectHandle('joint_3_FL')
+
 	prox_FL = sim.getObjectHandle("prox_FL") -- proximity sensor on leg tip
 						 -- sensor range is 0.002m in FLont of leg tip
 	dummy_tip_FL = sim.getObjectAssociatedWithScript(sim.handle_self)
@@ -17,6 +21,14 @@ function sysCall_init()
 	det_pt_FL={}
   newDum = -1
 	
+end
+
+function sysCall_actuation()
+    if attached then
+        sim.setJointTargetPosition(joint_1_FL,sim.getJointPosition(joint_1_FL))
+        sim.setJointTargetPosition(joint_2_FL,sim.getJointPosition(joint_2_FL))
+        sim.setJointTargetPosition(joint_3_FL,sim.getJointPosition(joint_3_FL))
+    end
 end
 
 function sysCall_sensing()
