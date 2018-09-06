@@ -57,76 +57,46 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     
     [footPlane_z,footPlane_d,footPlane_or] = plane_ACP(stance_pos_array);
     footPlane_z = footPlane_z/norm(footPlane_z);
-//    disp(footPlane_z);
-    
-//    legs_lift = list('FL','HL','FR','HR');
+
     FL_present = %f;HL_present = %f;FR_present = %f;HR_present = %f;
     for i=1:foot_nb
         select STANCE(i).leg
             case 'FL' then
-//                legs_lift(1)=null();
                 FL = i;
                 FL_present = %t;
             case 'HL' then
-//                legs_lift(2) = null();
                 HL = i;
                 HL_present = %t;
             case 'FR' then
-//                legs_lift(3) = null();
                 FR = i;
                 FR_present = %t;
             case 'HR' then
-//                legs_lift(4) = null();
                 HR = i;
                 HR_present = %t;
         end
     end
     
-//    disp(HR_present)
-//    disp(FR_present)
-//    disp(HL_present)
-//    disp(FL_present)
-    
-    
     if HR_present&FR_present then
         footPlane_x = (STANCE(HR).pos-footPlane_or) + 0.5*(STANCE(FR).pos-STANCE(HR).pos);
-//        disp(footPlane_x);
-//        disp(footPlane_or);
         footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
-//        disp(footPlane_x);
         footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
-//        disp(footPlane_x);
         footPlane_x = footPlane_x/norm(footPlane_x);
+        
         footPlane_y = cross(footPlane_z,footPlane_x);
+        
     elseif HL_present&FL_present then
         footPlane_x = (STANCE(HL).pos-footPlane_or) + 0.5*(STANCE(FL).pos-STANCE(HL).pos);
         footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
         footPlane_x = footPlane_x/norm(footPlane_x);
+        
         footPlane_y = cross(footPlane_z,footPlane_x);
     end
     
-    //Project x0 on the plane, to define the plane frame
-//    if norm(cross(footPlane_z,[1 0 0]))<1.e-3 then //if x is perpendicular to plane
-//        mprintf('x perpendicular to plane, projecting y instead');
-//        footPlane_x = projectionPlan([0 1 0],footPlane_or,footPlane_z);
-//    else
-//        footPlane_x = projectionPlan([1 0 0],footPlane_or,footPlane_z);
-//    end
-//    footPlane_x = footPlane_x - footPlane_or;
-//    footPlane_x = footPlane_x/norm(footPlane_x);
-//    
-////    footPlane_x=[1 0 0];
-//    
-//    footPlane_y = cross(footPlane_z,footPlane_x);
-//    disp(footPlane_z);
     footPlane_Rmat = [footPlane_x;footPlane_y;footPlane_z];
     [footPlane_angle,footPlane_vector] = angle_vector_FromMat(footPlane_Rmat);
     footPlane_Q = createQuaternion(footPlane_angle,footPlane_vector);
-//    disp(footPlane_Rmat);
     
     //Compute leg approximate workspaces. Project them on footPlane.
-//    baseDiag = sqrt(PARAMS.baseDimensions(1)**2+PARAMS.baseDimensions(2)**2);
-//    tic()
     for i = 1:foot_nb
         //leg workspace, all points in R0
         WSmi_R0 = [];
@@ -161,10 +131,8 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         WS_proj_RP(:,:,i) = WSmi_proj_RP;
         WS_proj_R0(:,:,i) = WSmi_proj_R0;
     end
-//    disp(toc())
     
     //Compute Cxy
-//    tic()
     Cxy = computeCxy(WS_proj_RP,[1 0;0 1]);
     if isnan(Cxy.origin) then
         if PARAMS.verbose then
@@ -172,7 +140,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         end
         return;
     end
-//    disp(toc())
     //Sample pxy_RP, transform into pxy_R0
     kpxy = 0;
     while kpxy<PARAMS.kpxy
@@ -180,7 +147,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         kpz = 0;
         pxy_RP = sampleInBBox(Cxy,PARAMS.shrink);
         pxy_R0 = footPlane_Rmat'*[pxy_RP 0]'+footPlane_or';
-//        mprintf("XY - At iteration %d of %d:\nBase xy_RP position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_RP(1),pxy_RP(2));
         if PARAMS.verbose then
             mprintf("XY - At iteration %d of %d:\nBase xy_R0 position: [%.4f, %.4f]\n",kpxy,PARAMS.kpxy,pxy_R0(1),pxy_R0(2));
         end
@@ -190,7 +156,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         line_z = struct('origin',pxy_R0','direction',footPlane_z);
         for i=1:foot_nb
             [boolInterT_i,tMultiple_i,tInterval_i,d_i]=intersectLineWS(WS_R0(:,:,i),shellDesc_AUG(i),line_z,PARAMS.tInc);
-//            boolInterZ(i) = boolInterZ_i;
             if boolInterT_i then
                 tInterval(i).entries = createZInterval(tInterval_i,d_i);
                 if PARAMS.verbose & tMultiple_i then
@@ -313,7 +278,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                             return;
                     end
                     [boolInterThet_i,thetMultiple_i,thetInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_thet,PARAMS.aInc);
-//                    disp(thetInter_i);
                     if boolInterThet_i then
                         thetInter(i).entries = createAngleInterval(thetInter_i);
                         if PARAMS.verbose & thetMultiple_i then
@@ -393,8 +357,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                         continue;
                     end
                     
-//                    phiFinalInterval = 0.5*phiFinalInterval;
-                    
                     phi = sampleFromMultInterval(phiFinalInterval);
                     if PARAMS.verbose then
                         mprintf("PHI - Base phi: %.4f\n",phi);
@@ -439,13 +401,8 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                                 factor_elbow = +1;
                         end
                         
-//                        disp(offset_i);
-//                        disp(R_0_EF);
-//                        disp(R_Leg_EF);
-                        
                         IK_target_RLeg = -R_Leg_EF*offset_i' + R_Leg_EF*R_0_EF'*(STANCE(i).pos'-base_R0'); //the foothold for the ith leg, in the leg base frame
                         IK_target_array(:,i) = IK_target_RLeg;
-//                        disp(IK_target_RLeg);
                         
                         THETA(i,1) = atan(IK_target_RLeg(2),IK_target_RLeg(1));
                         
@@ -455,7 +412,6 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                         c3 = nc3/dc3;
                         
                         if abs(c3)>1 then
-//                            disp(c3)
                             if PARAMS.verbose then
                                 mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
                             end 
