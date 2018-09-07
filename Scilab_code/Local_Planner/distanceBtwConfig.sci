@@ -3,7 +3,7 @@ function distance = distanceBtwConfig(config1,config2)
     //Space Robotics Laboratory - Tohoku University
     
     //Description:
-    //Outputs the distance between two configurations in R(3) + SO(3)
+    //Outputs the distance between two configurations in SE(3)
     
     //INPUT
     //config1: the first configuration

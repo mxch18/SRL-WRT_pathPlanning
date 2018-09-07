@@ -77,18 +77,25 @@ function [P,Q,THETA,RMAT,SUCCESS,footPlane_Q,footPlane_Rmat] = RLG(STANCE,NORMAL
     end
     
     if HR_present&FR_present then
-        footPlane_x = (STANCE(HR).pos-footPlane_or) + 0.5*(STANCE(FR).pos-STANCE(HR).pos);
-        footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
-        footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
+//        footPlane_x = (STANCE(HR).pos-footPlane_or) + 0.5*(STANCE(FR).pos-STANCE(HR).pos);
+        footPlane_x = projectionDroite(footPlane_or,STANCE(HR).pos,STANCE(FR).pos-STANCE(HR).pos); //vector from HR to orth proj of stance centroid on line HR-FR
+        footPlane_x = footPlane_x - footPlane_or;
+        footPlane_x = footPlane_x;
+//        footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
+//        footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
         footPlane_x = footPlane_x/norm(footPlane_x);
         
         footPlane_y = cross(footPlane_z,footPlane_x);
         
     elseif HL_present&FL_present then
-        footPlane_x = (STANCE(HL).pos-footPlane_or) + 0.5*(STANCE(FL).pos-STANCE(HL).pos);
-//        footPlane_x = footPlane_or
-        footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
-        footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
+//        footPlane_x = (STANCE(HL).pos-footPlane_or) + 0.5*(STANCE(FL).pos-STANCE(HL).pos);
+        footPlane_x = projectionDroite(footPlane_or,STANCE(HL).pos,STANCE(FL).pos-STANCE(HL).pos); //vector from HL to orth proj of stance centroid on line HL-FL
+        footPlane_x = footPlane_x - footPlane_or;
+        footPlane_x = -footPlane_x;
+//        disp(footPlane_x)
+//        footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
+//        footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
+//        disp(footPlane_x)
         footPlane_x = footPlane_x/norm(footPlane_x);
         
         footPlane_y = cross(footPlane_z,footPlane_x);
