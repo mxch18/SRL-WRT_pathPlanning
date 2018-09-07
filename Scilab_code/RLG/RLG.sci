@@ -1,4 +1,4 @@
-function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
+function [P,Q,THETA,RMAT,SUCCESS,footPlane_Q,footPlane_Rmat] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -22,8 +22,7 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //              *PARAMS.shrink
     //              *PARAMS.kpxy;
     //              *PARAMS.kpz;
-    //              *PARAMS.kRz;
-    //              *PARAMS.kRx;
+    //              *PARAMS.kRot
     //              *PARAMS.tInc;
     //              *PARAMS.aInc;
     //              *PARAMS.baseDimensions: (1) on x, (2) on y;
@@ -57,6 +56,7 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     
     [footPlane_z,footPlane_d,footPlane_or] = plane_ACP(stance_pos_array);
     footPlane_z = footPlane_z/norm(footPlane_z);
+    
 
     FL_present = %f;HL_present = %f;FR_present = %f;HR_present = %f;
     for i=1:foot_nb
@@ -86,13 +86,15 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         
     elseif HL_present&FL_present then
         footPlane_x = (STANCE(HL).pos-footPlane_or) + 0.5*(STANCE(FL).pos-STANCE(HL).pos);
+//        footPlane_x = footPlane_or
         footPlane_x = projectionPlan(footPlane_x,footPlane_or,footPlane_z);
+        footPlane_x = footPlane_x - (footPlane_z*footPlane_or')*footPlane_z
         footPlane_x = footPlane_x/norm(footPlane_x);
         
         footPlane_y = cross(footPlane_z,footPlane_x);
     end
     
-    footPlane_Rmat = [footPlane_x;footPlane_y;footPlane_z];
+    footPlane_Rmat = [footPlane_x;footPlane_y;footPlane_z]; //R_P_0
     [footPlane_angle,footPlane_vector] = angle_vector_FromMat(footPlane_Rmat);
     footPlane_Q = createQuaternion(footPlane_angle,footPlane_vector);
     
@@ -167,7 +169,7 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                 if PARAMS.verbose then
                     mprintf("   T - No intersection with leg %d workspace! Resampling pxy_RP...\n",i);
                 end
-                break;
+                break;tInterval
             end
         end
         
@@ -184,14 +186,13 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
         
         while kpz<PARAMS.kpz
             kpz = kpz+1;
-            kRz = 0;
+            kRot = 0;
             t_R0 = sampleFromMultInterval(tFinalInterval);
             if PARAMS.verbose then
                 mprintf('T - At iteration %d of %d:\n   Base t_R0 : %.4f\n",kpz,PARAMS.kpz,t_R0);
             end
             
-            //Compute intersections of Api arcs and WSmi for each rotation parameters
-            //Rotations are represented by Euler angles (norm ZXY): (psi,Z0);(thet,X1);(phi,Y2)
+            //Compute intersections of Api arcs and WSmi for the rotation parameter(s)
             base_R0 = pxy_R0'+t_R0*line_z.direction;
             
             P = base_R0;
@@ -199,68 +200,25 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
             offset_i = [];
             xOff = [1 0 0]*PARAMS.baseDimensions(1)/2;
             yOff = [0 1 0]*PARAMS.baseDimensions(2)/2;
-            R_0_EF = footPlane_Rmat; //Transformation matrix between end-eff frame and R0. At first is R_0_plane.
-            psiInter=cell(1,foot_nb);
-            arcDesc_psi = struct('origin',base_R0,'normal',[0 0 1]) //rotation around Z0
-            //First start with (psi,Z0)
-            for i=1:foot_nb
-                select STANCE(i).leg
-                    case 'FR' then
-                        offset_i = xOff + yOff;
-                    case 'FL' then
-                        offset_i = - xOff + yOff;
-                    case 'HR' then
-                        offset_i= + xOff - yOff;
-                    case 'HL' then
-                        offset_i = - xOff - yOff;
-                    else
-                        if PARAMS.verbose then
-                            mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
-                        end
-                        return;
-                end
-                [boolInterPsi_i,psiMultiple_i,psiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_psi,PARAMS.aInc);
-                if boolInterPsi_i then
-                    psiInter(i).entries = createAngleInterval(psiInter_i);
-                    if PARAMS.verbose & psiMultiple_i then
-                        mprintf("   PSI - For leg %d, psi lies in %d different intervals\n", i, size(psiInter(i).entries,1));
-                    elseif PARAMS.verbose then
-                        mprintf("   PSI - For leg %d, psi range is: %.4f to %.4f\n",i,psiInter(i).entries(1),psiInter(i).entries(2));
-                    end
-                else
-                    if PARAMS.verbose then
-                        mprintf("   PSI - No intersection with leg %d workspace! Resampling pz_0...\n",i);
-                    end
-                    break;
-                end
-            end
-            if ~boolInterPsi_i then continue; end
             
-            //Sample (psi,Z0)
-            [psiBoolFinal,psiFinalInterval] = intersectSetIntervals(psiInter);
-            if ~psiBoolFinal then
+            //Rotation is represented by angle-vector
+            //Sample random axis - Watch out because uniform distrib on the three coordinates is not spherically symmetric
+            Mean = zeros(3,1);Cov = eye(3,3);
+            while kRot<PARAMS.kRot
+                kRot = kRot+1;
+                rot_axis = grand(1,"mn",Mean,Cov);
+                rot_axis = rot_axis/norm(rot_axis);
+                rot_axis = rot_axis'; //guarantee to be uniformly distributed on the unit sphere
                 if PARAMS.verbose then
-                    mprintf("   PSI - psi valid intervals do not intersect! Resampling z_R0...\n");
-                end
-                continue;
-            end
-            
-            while kRz<PARAMS.kRz
-                kRz = kRz +1;
-                kRx = 0;
-                psi = sampleFromMultInterval(psiFinalInterval);
-                if PARAMS.verbose then
-                    mprintf("PSI - At iteration %d of %d:\n   Base psi: %.4f\n",kRz,PARAMS.kRz,psi);
+                    mprintf('AXIS - At iteration %d of %d:\n   Axis : %.4f %.4f %.4f\n",kRot,PARAMS.kRot,rot_axis(1),rot_axis(2),rot_axis(3));
                 end
                 
-                //Rotate base
-                Rz0 = [cos(psi), -sin(psi), 0;sin(psi), cos(psi) 0;0 0 1];
-                [Rz0_angle,Rz0_vector] = angle_vector_FromMat(Rz0);
-                Rz0_Q = createQuaternion(Rz0_angle,Rz0_vector);
-                R_0_EF = R_0_EF*Rz0;
-                thetInter=cell(1,foot_nb);
-                arcDesc_thet = struct('origin',base_R0,'normal',[1 0 0]) //rotation around X1
-                //Then (thet,X1)
+                R_0_EF = footPlane_Rmat; //initial rotation of base
+//                R_0_EF = eye(3,3); //no base rotation
+                
+                angleInter=cell(1,foot_nb);
+                arcDesc = struct('origin',base_R0,'normal',rot_axis);
+                
                 for i=1:foot_nb
                     select STANCE(i).leg
                         case 'FR' then
@@ -277,166 +235,108 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                             end
                             return;
                     end
-                    [boolInterThet_i,thetMultiple_i,thetInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_thet,PARAMS.aInc);
-                    if boolInterThet_i then
-                        thetInter(i).entries = createAngleInterval(thetInter_i);
-                        if PARAMS.verbose & thetMultiple_i then
-                            mprintf("   THET - For leg %d, theta lies in %d different intervals\n", i, size(thetInter(i).entries,1));
+                    
+                    [boolInterAngle_i,angleMultiple_i,angleInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc,PARAMS.aInc);
+                    if boolInterAngle_i then
+                        angleInter(i).entries = createAngleInterval(angleInter_i);
+                        if PARAMS.verbose & angleMultiple_i then
+                            mprintf("   ANGLE - For leg %d, angle lies in %d different intervals\n", i, size(angleInter(i).entries,1));
                         elseif PARAMS.verbose then
-                            mprintf("   THET - For leg %d, theta range is: %.4f to %.4f\n",i,thetInter(i).entries(1),thetInter(i).entries(2));
+                            mprintf("   ANGLE - For leg %d, angle range is: %.4f to %.4f\n",i,angleInter(i).entries(1),angleInter(i).entries(2));
                         end
                     else
                         if PARAMS.verbose then
-                            mprintf("   THET - No intersection with leg %d workspace! Resampling psi...\n",i);
+                            mprintf("   ANGLE - No intersection with leg %d workspace! Resampling axis...\n",i);
                         end
                         break;
                     end
                 end
-                if ~boolInterThet_i then continue; end
                 
-                //Sample (theta,X1)
-               [thetBoolFinal,thetFinalInterval] = intersectSetIntervals(thetInter);
-                if ~thetBoolFinal then
+                if ~boolInterAngle_i then continue; end
+                
+                //Sample angle
+                [angleFinalBool,angleFinalInterval] = intersectSetIntervals(angleInter);
+                if ~angleFinalBool then
                     if PARAMS.verbose then
-                        mprintf("   THET - theta valid intervals do not intersect! Resampling psi...\n");
+                        mprintf("   ANGLE - angle valid intervals do not intersect! Resampling axis...\n");
                     end
-                    continue;
+                    continue; 
+                end
+            
+                angle = sampleFromMultInterval(angleFinalInterval);
+                if PARAMS.verbose then
+                    mprintf('Rotation angle: %.4f",angle*180/%pi);
                 end
                 
-                while kRx<PARAMS.kRx
-                    kRx = kRx +1;
-                    theta = sampleFromMultInterval(thetFinalInterval);
-                    if PARAMS.verbose then
-                        mprintf("THETA - At iteration %d of %d:\n   Base theta: %.4f\n",kRx,PARAMS.kRx,theta);
-                    end
-                    //Rotate base
-                    Rx1 = [1, 0, 0;0, cos(theta), -sin(theta);0 sin(theta) cos(theta)];
-                    R_0_EF = R_0_EF*Rx1;
-                    phiInter=cell(1,foot_nb);
-                    arcDesc_phi = struct('origin',base_R0,'normal',[0 1 0]) //rotation around Y2
-                    //Then (phi,Y2)
-                    for i=1:foot_nb
-                        select STANCE(i).leg
-                            case 'FR' then
-                                offset_i = xOff + yOff;
-                            case 'FL' then
-                                offset_i = - xOff + yOff;
-                            case 'HR' then
-                                offset_i= + xOff - yOff;
-                            case 'HL' then
-                                offset_i = - xOff - yOff;
-                            else
-                                if PARAMS.verbose then
-                                    mprintf("Error in the definition of foothold %d : leg name does not exist!\n",i);
-                                end
-                                return;
-                        end
-                        [boolInterPhi_i,phiMultiple_i,phiInter_i] = intersectArcWS(WS_R0(:,:,i),offset_i,R_0_EF,shellDesc(i),arcDesc_phi,PARAMS.aInc);
-                        if boolInterPhi_i then
-                            phiInter(i).entries = createAngleInterval(phiInter_i);
-                            if PARAMS.verbose & phiMultiple_i then
-                                mprintf("   PHI - For leg %d, phi lies in %d different intervals\n", i, size(phiInter(i).entries,1));
-                            elseif PARAMS.verbose then
-                                mprintf("   PHI - For leg %d, phi range is: %.4f to %.4f\n",i,phiInter(i).entries(1),phiInter(i).entries(2));
-                            end
-                        else
-                            if PARAMS.verbose then
-                                mprintf("   PHI - No intersection with leg %d workspace! Resampling theta...\n",i);
-                            end
-                            break;
-                        end
-                    end
-                    if ~boolInterPhi_i then continue; end
-                    
-                    //Sample (phi,Y2)
-                    [phiBoolFinal,phiFinalInterval] = intersectSetIntervals(phiInter);
-                    if ~phiBoolFinal then
-                        if PARAMS.verbose then
-                            mprintf("   PHI - phi valid intervals do not intersect! Resampling theta...\n");
-                        end
-                        continue;
-                    end
-                    
-                    phi = sampleFromMultInterval(phiFinalInterval);
-                    if PARAMS.verbose then
-                        mprintf("PHI - Base phi: %.4f\n",phi);
-                    end
-                    
-                    Ry2 = [cos(phi), 0, sin(phi);0, 1 0;-sin(phi) 0 cos(phi)];
-                    R_0_EF = R_0_EF*Ry2;
-                    
-                    RMAT = R_0_EF;
-                    
-                    O = [psi,theta,phi];
-                    
-                    if PARAMS.verbose then
-                        mprintf("\nBase state sampled! Now using closed form IK for the legs...\n");
-                    end
-                    
-                    for i=1:foot_nb
-                        select STANCE(i).leg
-                            case 'FR' then
-                                offset_i = xOff + yOff;
-                                R_Leg_EF = [0 1 0;1 0 0;0 0 -1];
-                                factor_t2 = -1;
-                                factor_t3 = -1;
-                                factor_elbow = +1;
-                            case 'FL' then
-                                offset_i = - xOff + yOff;
-                                R_Leg_EF = [0 1 0;-1 0 0;0 0 1];
-                                factor_t2 = +1;
-                                factor_t3 = +1;
-                                factor_elbow = -1;
-                            case 'HR' then
-                                offset_i= + xOff - yOff;
-                                R_Leg_EF = [0 -1 0;1 0 0;0 0 1];
-                                factor_t2 = +1;
-                                factor_t3 = +1;
-                                factor_elbow = -1;
-                            case 'HL' then
-                                offset_i = - xOff - yOff;
-                                R_Leg_EF = [0 -1 0;-1 0 0;0 0 -1];
-                                factor_t2 = -1;
-                                factor_t3 = -1;
-                                factor_elbow = +1;
-                        end
-                        
-                        IK_target_RLeg = -R_Leg_EF*offset_i' + R_Leg_EF*R_0_EF'*(STANCE(i).pos'-base_R0'); //the foothold for the ith leg, in the leg base frame
-                        IK_target_array(:,i) = IK_target_RLeg;
-                        
-                        THETA(i,1) = atan(IK_target_RLeg(2),IK_target_RLeg(1));
-                        
-                        rem = sqrt(IK_target_RLeg(1)**2+IK_target_RLeg(2)**2)-PARAMS.legLength(1);
-                        nc3 = IK_target_RLeg(3)**2+rem**2-PARAMS.legLength(2)**2-PARAMS.legLength(3)**2;
-                        dc3 = 2*PARAMS.legLength(2)*PARAMS.legLength(3);
-                        c3 = nc3/dc3;
-                        
-                        if abs(c3)>1 then
-                            if PARAMS.verbose then
-                                mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
-                            end 
-                            return;
-                        end
-                        s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
-                        THETA(i,3) = factor_t3*atan(s3,c3);
-                        
-                        THETA(i,2) = factor_t2*(atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3))
-                    end
-                    SUCCESS=%T;
-                    if PARAMS.verbose then
-                        mprintf("\nSUCCESS!\n");
-                    end
-                    return;
-                end
+                Q = quatMult(footPlane_Q,createQuaternion(angle,rot_axis));
+                RMAT = matrix_fromQuaternion(Q);
                 
                 if PARAMS.verbose then
-                    mprintf("THET - Reached maximum number of trials, resampling psi...\n");
+                    mprintf("\nBase state sampled! Now using closed form IK for the legs...\n");
                 end
                 
+                for i=1:foot_nb
+                    select STANCE(i).leg
+                        case 'FR' then
+                            offset_i = xOff + yOff;
+                            R_Leg_EF = [0 1 0;1 0 0;0 0 -1];
+                            factor_t2 = -1;
+                            factor_t3 = -1;
+                            factor_elbow = +1;
+                        case 'FL' then
+                            offset_i = - xOff + yOff;
+                            R_Leg_EF = [0 1 0;-1 0 0;0 0 1];
+                            factor_t2 = +1;
+                            factor_t3 = +1;
+                            factor_elbow = -1;
+                        case 'HR' then
+                            offset_i= + xOff - yOff;
+                            R_Leg_EF = [0 -1 0;1 0 0;0 0 1];
+                            factor_t2 = +1;
+                            factor_t3 = +1;
+                            factor_elbow = -1;
+                        case 'HL' then
+                            offset_i = - xOff - yOff;
+                            R_Leg_EF = [0 -1 0;-1 0 0;0 0 -1];
+                            factor_t2 = -1;
+                            factor_t3 = -1;
+                            factor_elbow = +1;
+                    end
+                    
+                    IK_target_RLeg = -R_Leg_EF*offset_i' + R_Leg_EF*RMAT'*(STANCE(i).pos'-base_R0'); //the foothold for the ith leg, in the leg base frame
+                    IK_target_array(:,i) = IK_target_RLeg;
+                    
+                    THETA(i,1) = atan(IK_target_RLeg(2),IK_target_RLeg(1));
+                    
+                    rem = sqrt(IK_target_RLeg(1)**2+IK_target_RLeg(2)**2)-PARAMS.legLength(1);
+                    nc3 = IK_target_RLeg(3)**2+rem**2-PARAMS.legLength(2)**2-PARAMS.legLength(3)**2;
+                    dc3 = 2*PARAMS.legLength(2)*PARAMS.legLength(3);
+                    c3 = nc3/dc3;
+                    bool_ik = abs(c3)>1;
+                    if bool_ik then
+                        if PARAMS.verbose then
+                            mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\nResampling axis...\n",STANCE(i).leg);
+                        end
+                        return;
+//                        break;
+                    end
+                    s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
+                    THETA(i,3) = factor_t3*atan(s3,c3);
+                    
+                    THETA(i,2) = factor_t2*(atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3))
+                end
+                
+                if bool_ik then continue; end
+                
+                SUCCESS=%T;
+                if PARAMS.verbose then
+                    mprintf("\nSUCCESS!\n");
+                end
+                return;
             end
-            
+    
             if PARAMS.verbose then
-                mprintf("PSI - Reached maximum number of trials, resampling z...\n");
+                mprintf("AXIS - Reached maximum number of trials, resampling T...\n");
             end
             
         end
