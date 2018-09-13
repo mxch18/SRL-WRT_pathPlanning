@@ -1,4 +1,4 @@
-function [P,Q,THETA,RMAT,SUCCESS,footPlane_Q,footPlane_Rmat] = RLG(STANCE,NORMALS,PARAMS)
+function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -176,7 +176,7 @@ function [P,Q,THETA,RMAT,SUCCESS,footPlane_Q,footPlane_Rmat] = RLG(STANCE,NORMAL
                 if PARAMS.verbose then
                     mprintf("   T - No intersection with leg %d workspace! Resampling pxy_RP...\n",i);
                 end
-                break;tInterval
+                break;
             end
         end
         
