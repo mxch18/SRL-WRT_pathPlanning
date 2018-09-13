@@ -5,12 +5,17 @@ f2=struct('leg','FL','pos',[-2.3750e-1,+4.3146e-1,+1.9095e-2]);
 f3=struct('leg','HR','pos',[+2.3750e-1,-4.3146e-1,+1.9095e-2]);
 f4=struct('leg','FR','pos',[+2.3750e-1,+4.3146e-1,+1.9095e-2]);
 
+//f3=struct('leg','HR','pos',[+3.8387e+0, -2.6345e+0, -1.6744e+0]);
+//f1=struct('leg','HL','pos',[+3.4299e+0, -2.7529e+0, -1.9652e+0]);
+//f2=struct('leg','FL','pos',[+3.2830e+0, -2.5138e+0, -1.3498e+0]);
+//f4=struct('leg','FR','pos',[+3.5637e+0, -2.5381e+0, -1.3505e+0]);
+//
 //f1=struct('leg','HL','pos',[-2.3750e-1,0,-4.3146e-1]);
 //f2=struct('leg','FL','pos',[-2.3750e-1,0,+4.3146e-1]);
 //f3=struct('leg','HR','pos',[+2.3750e-1,0,-4.3146e-1]);
 //f4=struct('leg','FR','pos',[+2.3750e-1,0,+4.3146e-1]);
 
-stance = [f1,f2,f3];
+stance = [f1,f2,f3,f4];
 
 stance_pos_list=stance(:).pos;
 
@@ -22,17 +27,18 @@ end
 [x,y,z] = rect3D(c,a);
 
 foot_n = [0 0 1];
+foot_n = foot_n/norm(foot_n);
 foot_n = [foot_n;foot_n;foot_n;foot_n];
 
 extRad = 0.55*ones(1,4);
 distApiOb = sqrt(0.075**2+0.15**2)*ones(1,4);
 intRad = 0*ones(1,4);
 
-params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRot',10,'legLength',[0.1,0.15,0.3],'verbose',%T);
-//params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5,'legLength',[0.1,0.15,0.3],'verbose',%T);
+//params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRot',10,'legLength',[0.1,0.15,0.3],'verbose',%T);
+params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',5,'kRx',5,'legLength',[0.1,0.15,0.3],'verbose',%T);
 
 //tic();
-[p,o,thet,rmat,succ,footPlane_Q,footPlane_Rmat]=RLG(stance,foot_n,params);
+[p,o,thet,rmat,succ]=RLG_Euler(stance,foot_n,params);
 //disp(footPlane_Rmat*footPlane_Rmat')
 //disp(toc());
 //disp(rmat)
