@@ -13,9 +13,11 @@ q1 = createQuaternion(0,[0 0 1]);
 c1 = [p1 q1];
 
 p2 = [0 0.1 0.25];
-ang = -%pi/4+rand()*%pi/2;
-q2 = createQuaternion(ang,rand(1,3));
-q2 = createQuaternion(0,[0 0 1]);
+ang = 15*%pi/180;
+q2 = createQuaternion(ang,[0 0 1]);
+//ang = -%pi/3+rand()*2*%pi/3;
+//q2 = createQuaternion(ang,rand(1,3));
+
 
 c2 = [p2 q2];
 

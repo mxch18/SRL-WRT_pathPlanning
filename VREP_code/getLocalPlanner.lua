@@ -20,6 +20,8 @@ function sysCall_init()
 
 	angles_joints = {}
 
+	file_name = "/home/maxens/Stage/Code/git/SRL-WRT_pathPlanning/Scilab_code/leg_theta.txt"
+
 	i = 1
 	i_max = 0
 
