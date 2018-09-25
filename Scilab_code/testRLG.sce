@@ -38,14 +38,14 @@ intRad = 0*ones(1,4);
 params = struct('extRad',extRad,'distApiOb',distApiOb,'intRad',intRad,'halfAngle',%pi/2,'shellPtsNb',20,'shrink',0.2,'kpxy',5,'tInc',0.04,'baseDimensions',[0.15,0.3],'kpz',5,'aInc',2*%pi/30,'kRz',2,'kRx',2,'legLength',[0.1,0.15,0.3],'verbose',%T);
 
 //tic();
-[p,o,thet,rmat,succ]=RLG_Euler(stance,foot_n,params);
+[p,o,thet,succ,nb_try]=RLG_Euler(stance,foot_n,params);
 //disp(footPlane_Rmat*footPlane_Rmat')
 //disp(toc());
 //disp(rmat)
 
 toDeg = 180/%pi;
 
-if succ then
+if %F then
     filen = mopen("./robot_state.txt","w");
     mfprintf(filen,"%f %f %f\n",p(1),p(2),p(3));
 //    mfprintf(filen,"%f %f %f\n",o(1),o(2),o(3));

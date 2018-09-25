@@ -1,4 +1,4 @@
-function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
+function [P,Q,THETA,SUCCESS,NB_TRY] = RLG_Euler(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -36,6 +36,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
     //THETA: the leg's joint angles
     //RMAT: the rotation matrix
     //SUCCESS: boolean for benchmarking purposes (atm)
+    //NB_TRY: number of tries to sample a configuration
     
     //TODO : put psi/theta/phi range finding in function
     //       could you put bounds on phi so that it doesn't flip over? NAH(?)
@@ -44,7 +45,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
     //       Change rotation parametrization to full quaternion
     
 //----------------------------------------------------------------------------//
-    P = 0;Q = 0;THETA = 0;SUCCESS = %F;RMAT = 0;
+    P = 0;Q = 0;THETA = 0;SUCCESS = %F;RMAT = 0;NB_TRY = 1;
     
     //Compute LS-fit plane by ACP
     stance_pos_list = STANCE(:).pos;
@@ -166,6 +167,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
             else
                 if PARAMS.verbose then
                     mprintf("   T - No intersection with leg %d workspace! Resampling pxy_RP...\n",i);
+                    NB_TRY = NB_TRY+1;
                 end
                 break;
             end
@@ -178,6 +180,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
         if ~tFinalBool then
             if PARAMS.verbose then
                 mprintf("   T - t valid intervals do not intersect! Resammpling pxy_RP...\n");
+                NB_TRY = NB_TRY+1;
             end
             continue; 
         end
@@ -230,6 +233,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                 else
                     if PARAMS.verbose then
                         mprintf("   PSI - No intersection with leg %d workspace! Resampling pz_0...\n",i);
+                        NB_TRY = NB_TRY+1;
                     end
                     break;
                 end
@@ -241,6 +245,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
             if ~psiBoolFinal then
                 if PARAMS.verbose then
                     mprintf("   PSI - psi valid intervals do not intersect! Resampling z_R0...\n");
+                    NB_TRY = NB_TRY+1;
                 end
                 continue;
             end
@@ -288,6 +293,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                     else
                         if PARAMS.verbose then
                             mprintf("   THET - No intersection with leg %d workspace! Resampling psi...\n",i);
+                            NB_TRY = NB_TRY+1;
                         end
                         break;
                     end
@@ -299,6 +305,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                 if ~thetBoolFinal then
                     if PARAMS.verbose then
                         mprintf("   THET - theta valid intervals do not intersect! Resampling psi...\n");
+                        NB_TRY = NB_TRY+1;
                     end
                     continue;
                 end
@@ -342,6 +349,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                         else
                             if PARAMS.verbose then
                                 mprintf("   PHI - No intersection with leg %d workspace! Resampling theta...\n",i);
+                                NB_TRY = NB_TRY+1;
                             end
                             break;
                         end
@@ -353,6 +361,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                     if ~phiBoolFinal then
                         if PARAMS.verbose then
                             mprintf("   PHI - phi valid intervals do not intersect! Resampling theta...\n");
+                            NB_TRY = NB_TRY+1;
                         end
                         continue;
                     end
@@ -414,6 +423,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                         if bool_ik then
                             if PARAMS.verbose then
                                 mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
+                                NB_TRY = NB_TRY+1;
                             end 
 //                            return;
                             break;
@@ -427,6 +437,7 @@ function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                     if bool_ik then continue; end
                     
                     SUCCESS=%T;
+//                    NB_TRY = kRx*kRz*kpz*kpxy;
                     if PARAMS.verbose then
                         mprintf("\nSUCCESS!\n");
                     end
