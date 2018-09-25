@@ -1,4 +1,4 @@
-function [P,Q,THETA,RMAT,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
+function [P,Q,THETA,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -410,18 +410,22 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG_Euler(STANCE,NORMALS,PARAMS)
                         nc3 = IK_target_RLeg(3)**2+rem**2-PARAMS.legLength(2)**2-PARAMS.legLength(3)**2;
                         dc3 = 2*PARAMS.legLength(2)*PARAMS.legLength(3);
                         c3 = nc3/dc3;
-                        
-                        if abs(c3)>1 then
+                        bool_ik = abs(c3)>1;
+                        if bool_ik then
                             if PARAMS.verbose then
                                 mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\n",STANCE(i).leg);
                             end 
-                            return;
+//                            return;
+                            break;
                         end
                         s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
                         THETA(i,3) = factor_t3*atan(s3,c3);
                         
                         THETA(i,2) = factor_t2*(atan(IK_target_RLeg(3),rem)-atan(PARAMS.legLength(3)*s3,PARAMS.legLength(2)+PARAMS.legLength(3)*c3))
                     end
+                    
+                    if bool_ik then continue; end
+                    
                     SUCCESS=%T;
                     if PARAMS.verbose then
                         mprintf("\nSUCCESS!\n");

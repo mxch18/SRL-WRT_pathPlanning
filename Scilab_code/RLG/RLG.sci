@@ -324,8 +324,8 @@ function [P,Q,THETA,RMAT,SUCCESS] = RLG(STANCE,NORMALS,PARAMS)
                         if PARAMS.verbose then
                             mprintf("\nIK - NO SOLUTION FOR LEG %s INVERSE KINEMATICS\nResampling axis...\n",STANCE(i).leg);
                         end
-                        return;
-//                        break;
+//                        return;
+                        break;
                     end
                     s3 = factor_elbow*sqrt(1-c3**2); //ELBOw UP
                     THETA(i,3) = factor_t3*atan(s3,c3);

@@ -33,7 +33,7 @@ distance_to_normal = [];
 p_normal = [0 0 1.49e-1];
 q_normal = createQuaternion(0,[0 0 1]);
 
-n= 200;
+n= 50;
 
 for i = 1:n
     tic();
@@ -47,7 +47,7 @@ for i = 1:n
     mprintf('RLG_Euler - Iteration %d of %d\n',i,n)
 end
 
-mprintf('Rate of success over %d tries for RLG_Euler: %.1f%%',n,100*sum(bool2s(successRate_euler))/n);
+mprintf('Rate of success over %d tries for RLG_Euler: %.1f%%\n',n,100*sum(bool2s(successRate_euler))/n);
 
 for i = 1:n
     tic();
@@ -61,4 +61,4 @@ for i = 1:n
     mprintf('RLG - Iteration %d of %d\n',i,n)
 end
 
-mprintf('Rate of success over %d tries for RLG: %.1f%%',n,100*sum(bool2s(successRate))/n);
+mprintf('Rate of success over %d tries for RLG: %.1f%%\n',n,100*sum(bool2s(successRate))/n);
