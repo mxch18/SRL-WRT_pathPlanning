@@ -1,5 +1,5 @@
 //test graph creation
-clear;clc;close();getd("./Graph_search");getd("./kNN");getd(".")
+clear;clc;close();getd("./Graph_search");getd("./kNN");getd(".");getd("./Planner")
 
 function_set = struct('query_ws',in_ball_naive,'classifier',classify_pts);
 
@@ -53,12 +53,17 @@ end
 
 ref_pt = min(p,'r');
 cell_size = 0.5;
-params_prn = struct('ball_radius',0.6,'origin',ref_pt,'cell_size',cell_size,'goal_stance',stance);
+params_prn = struct('ball_radius',0.6,'origin',ref_pt,'cell_size',cell_size,'goal_stance',stance,'function_set',function_set,'hash_size',1013,'nb',5,'ne',1);
 
-new_stances = find_adjacent(stance_ini,p,params_prn,function_set);
 
-stance_graph = make_graph('stance_graph',1,1,[1],[1]);
-stance_graph = delete_edges([1 1],stance_graph);
+pts_reach = in_ball_naive(stance_ini,p,params_prn);
+
+pts_classified = classify_pts(pts_reach,stance_ini);
+
+new_stances = find_adjacent(stance_ini,p,params_prn);
+
+metanet_graph = make_graph('stance_graph',1,1,[1],[1]);
+metanet_graph = delete_edges([1 1],metanet_graph);
 
 stance_list = list(struct('stance',stance_ini,'gcost',0,'hcost',0));
 
@@ -67,11 +72,18 @@ stance_hash(1014) = 0;
 stance_hash(1014) = null();
 
 centroid = mean(stance_pos,'r'); //centroid of the initial stance
-//centroid_norm = norm(centroid);
 hash_bin = hash_XOR(centroid,length(stance_hash),cell_size,ref_pt);
-stance_hash(hash_bin) = centroid;
+stance_hash(hash_bin) = [centroid, -1];
 
-// bool = add_stance_to_graph(STNC,parent_node_nb,metanet_graph,stance_list,stance_hash,qtz_step)
+edge_list = list();
 
-[b,stance_graph,stance_list,stance_hash] = add_stance_to_graph(new_stances(1,:),1,stance_graph,stance_list,stance_hash,params_prn);
+cost_list = list(struct('node_number',1,'node_cost',stance_list(1).hcost,'expanded',%T));
+
+// [bool_add,bool_fin,stance_graph_out] = add_stance_to_graph(STNC,parent_node_nb,stance_graph,params)
+
+stance_graph = struct('metanet_graph',metanet_graph,'stance_list',stance_list,'edge_list',edge_list,'stance_hash',stance_hash,'cost_list',cost_list)
+
+//[b_add,b_fin,stance_graph] = add_stance_to_graph(new_stances(1,:),1,stance_graph,params_prn);
+
+[bool_success,path,expansion_nodes,single_cndts_node_nb] = plan(stance_ini,p,params_prn)
 

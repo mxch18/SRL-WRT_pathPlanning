@@ -25,11 +25,11 @@ function stance_list = cons_child_stnc(STNC,pts_classified)
 //            disp(j)
             new_fthld = struct('leg',STNC(i).leg,'pos',pts_classified(i).entries(j,:));
             if i==1 then
-                new_stnc = [new_fthld,STNC((i+1):l)']
+                new_stnc = [new_fthld,STNC(1,(i+1):l)]
             elseif i==size(pts_classified,1) then
-                new_stnc = [STNC(1:(i-1))',new_fthld];
+                new_stnc = [STNC(1,1:(i-1)),new_fthld];
             else
-                new_stnc = [STNC(1:(i-1))',new_fthld,STNC((i+1):l)'];
+                new_stnc = [STNC(1,1:(i-1)),new_fthld,STNC(1,(i+1):l)];
             end
 //            disp(new_stnc)
             stance_list = [stance_list;new_stnc];
