@@ -105,13 +105,13 @@ function [legPath, success] = localPlanner(config1,config2,s,PARAMS,STANCE,stanc
             end
         end
         
-        success = %T;
-        
         legPath(j,1:3) = THETA(1,1:3);
         legPath(j,4:6) = THETA(2,1:3);
         legPath(j,7:9) = THETA(3,1:3);
         legPath(j,10:12) = THETA(4,1:3);
         
     end
+    
+    success = %T;
     
 endfunction
