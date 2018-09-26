@@ -1,4 +1,4 @@
-function element = peep_member(old_queue,index)
+function [element,new_queue] = pop_member(old_queue,index)
     //Author : Maxens ACHIEPI
     //Space Robotics Laboratory - Tohoku University
     
@@ -15,10 +15,12 @@ function element = peep_member(old_queue,index)
     //
     
 //----------------------------------------------------------------------------//
+    new_queue = old_queue;
     element = 0;
     
-    if length(new_queue)>0 then
-        element = old_queue(index);
+    if length(new_queue)>=index then
+        element = new_queue(index);
+        new_queue(index)=null();
     else
         return;
     end

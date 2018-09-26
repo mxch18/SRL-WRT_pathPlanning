@@ -55,7 +55,6 @@ ref_pt = min(p,'r');
 cell_size = 0.5;
 params_prn = struct('ball_radius',0.6,'origin',ref_pt,'cell_size',cell_size,'goal_stance',stance,'function_set',function_set,'hash_size',1013,'nb',5,'ne',1);
 
-
 pts_reach = in_ball_naive(stance_ini,p,params_prn);
 
 pts_classified = classify_pts(pts_reach,stance_ini);

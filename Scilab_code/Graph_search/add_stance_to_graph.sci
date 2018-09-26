@@ -19,7 +19,7 @@ function [bool_add,bool_fin,stance_graph_out] = add_stance_to_graph(STNC,parent_
     //
     
     //TODO
-    //
+    //add roadmap
 //----------------------------------------------------------------------------//
     bool_fin = %F
     if isequal(find_centroid(params.goal_stance),find_centroid(STNC)) then
@@ -45,8 +45,8 @@ function [bool_add,bool_fin,stance_graph_out] = add_stance_to_graph(STNC,parent_
     end
     
     if bool_hash_ok then
-        for i=1:size(stance_graph_out.stance_hash(hash_bin),1)
-            if isequal(cntr,stance_graph_out.stance_hash(hash_bin)(i,1:3)) then
+        for i_cntr=1:size(stance_graph_out.stance_hash(hash_bin),1)
+            if isequal(cntr,stance_graph_out.stance_hash(hash_bin)(i_cntr,1:3)) then
                 mprintf("Centroid already exists, not adding stance\n");
                 return; //we don't add stances that already exist...
             end
@@ -64,7 +64,39 @@ function [bool_add,bool_fin,stance_graph_out] = add_stance_to_graph(STNC,parent_
     
     stance_gcost = stance_graph_out.stance_list(parent_node_nb).gcost+1;//number of steps
     stance_hcost = geometric_cost(STNC,params.goal_stance);//cost associated with other factors
-    stance_graph_out.stance_list($+1) = struct('stance',STNC,'gcost',stance_gcost,'hcost',stance_hcost); //add to end of stance_list
+    
+    stance_roadmap_graph = make_graph('roadmap',1,1,[1],[1]);
+    stance_roadmap_graph = delete_edges([1 1],stance_roadmap_graph);
+    
+    stance_roadmap_config_list = list();
+    stance_roadmap_edge_list = list();
+    
+    stance_hash_LSH_dim = 7; //for 4-stance
+    stance_hash_LSH_nb = params.stance_hash_LSH_nb;
+    stance_hash_LSH_size = params.stance_hash_LSH_size;
+    
+    stance_hash_LSH_hashing_func = struct('array',zeros(stance_hash_LSH_nb,stance_hash_LSH_dim),'prime_factor',73856093);
+    Mean_LSH = zeros(stance_hash_LSH_dim,1);Cov_LSH = eye(stance_hash_LSH_dim,stance_hash_LSH_dim);
+    
+    stance_hash_LSH_hash_tables = list();
+    
+    for i_stance_hash_LSH = 1:stance_hash_LSH_nb
+        vect_i = grand(1,"mn",Mean_LSH,Cov_LSH)';
+        vect_i = vect_i/norm(vect_i);
+        stance_hash_LSH_hashing_func.array(i_stance_hash_LSH,:) = vect_i;
+        
+        stance_hash_LSH_hash_tables(i_stance_hash_LSH) = list();
+        for i_stance_hash_LSH_hash_tab=1:stance_hash_LSH_size
+            stance_hash_LSH_hash_tables(i_stance_hash_LSH)(i_stance_hash_LSH_hash_tab) = [];
+        end
+    end
+    
+    stance_hash_LSH = struct('dimension',stance_hash_LSH_dim,'nb',stance_hash_LSH_nb,'size',stance_hash_LSH_size,..
+                             'hashing_functions',stance_hash_LSH_hashing_func,'hash_tables',stance_hash_LSH_hash_tables);
+    
+    stance_roadmap = struct('meta_graph',stance_roadmap_graph,'config_list',stance_roadmap_config_list,'edge_list',stance_roadmap_edge_list,'hash_LSH',stance_hash_LSH);
+    
+    stance_graph_out.stance_list($+1) = struct('stance',STNC,'roadmap',stance_roadmap,'gcost',stance_gcost,'hcost',stance_hcost); //add to end of stance_list
     
     mprintf("Stance added\n");
     bool_add = %T;
@@ -88,13 +120,13 @@ function [bool_add,bool_fin,stance_graph_out] = add_stance_to_graph(STNC,parent_
     end
     
     if bool_hash_edge_ok then
-        for i=1:size(stance_graph_out.stance_hash(hash_bin_edge),1)
-            if isequal(cntr_edge,stance_graph_out.stance_hash(hash_bin_edge)(i,1:3)) then
+        for i_cntr_edge=1:size(stance_graph_out.stance_hash(hash_bin_edge),1)
+            if isequal(cntr_edge,stance_graph_out.stance_hash(hash_bin_edge)(i_cntr_edge,1:3)) then
                 mprintf("Edge stance already exists, not adding stance to edge_list but linking it somehow lol\n");
                 
-                exist_edge_nb = stance_graph_out.stance_hash(hash_bin_edge)(i,4);
+                exist_edge_nb = stance_graph_out.stance_hash(hash_bin_edge)(i_cntr_edge,4);
                 
-                stance_graph_out.edge_list($+1) = struct('link',exist_edge_nb,'stance',0,'cost',0);
+                stance_graph_out.edge_list($+1) = struct('link',exist_edge_nb,'stance',0,'roadmap',0,'cost',new_edge_stance_hcost);
 //                stance_graph_out.stance_list(parent_node_nb).hcost = stance_graph_out.edge_list(exist_edge_nb).cost/2 + stance_graph_out.stance_list(parent_node_nb).hcost;
                 stance_graph_out.stance_list(node_nb+1).hcost = stance_graph_out.edge_list(exist_edge_nb).cost/2 + stance_graph_out.stance_list(node_nb+1).hcost;
                 
